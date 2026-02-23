@@ -1,7 +1,8 @@
+import { Suspense } from 'react';
 import FiltrosBusqueda from '@/components/FiltrosBusqueda';
 import HeroBanner from '@/components/HeroBanner';
-import ListadoPropiedades from '@/components/ListadoPropiedades';
-import { obtenerPropiedadesPublicas } from '@/lib/propiedades/obtenerPropiedadesPublicas';
+import ListadoPropiedadesAsync from '@/components/ListadoPropiedadesAsync';
+import SkeletonListado from '@/components/SkeletonListado';
 import type { FiltrosBusquedaServidor, Moneda, ModoNegocio, TipoPropiedad } from '@/types';
 
 export const runtime = 'nodejs';
@@ -83,7 +84,14 @@ export default async function Home({
     precioMax: parseNumeroPositivo(params.precioMax),
   };
 
-  const propiedadesFiltradas = await obtenerPropiedadesPublicas(filtros);
+  const keyFiltros = [
+    params.negocio,
+    params.tipo,
+    params.ciudad,
+    params.moneda,
+    params.precioMin,
+    params.precioMax,
+  ].join('|');
 
   return (
     <>
@@ -92,7 +100,9 @@ export default async function Home({
         <div className="-mt-10 relative z-10">
           <FiltrosBusqueda />
         </div>
-        <ListadoPropiedades propiedades={propiedadesFiltradas} monedaUsuario={monedaActual} />
+        <Suspense key={keyFiltros} fallback={<SkeletonListado />}>
+          <ListadoPropiedadesAsync filtros={filtros} monedaUsuario={monedaActual} />
+        </Suspense>
       </main>
     </>
   );
