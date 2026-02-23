@@ -1,0 +1,21 @@
+import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+
+const NOMBRE_COOKIE_SESION = '__session';
+
+export async function POST() {
+  const response = NextResponse.json({ ok: true });
+
+  response.cookies.set({
+    name: NOMBRE_COOKIE_SESION,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+
+  return response;
+}
