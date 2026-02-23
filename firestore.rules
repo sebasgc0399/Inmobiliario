@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    function stringNoVacio(valor) {
+      return valor is string && valor.size() > 0;
+    }
+
+    function numeroNoNegativo(valor) {
+      return valor is number && valor >= 0;
+    }
+
+    function precioValido(precio) {
+      return precio is map
+        && precio.keys().hasAll(['valor', 'moneda'])
+        && precio.keys().hasOnly(['valor', 'moneda', 'adminMensual', 'impuestoPredial', 'negociable'])
+        && numeroNoNegativo(precio.valor)
+        && precio.moneda in ['COP', 'USD', 'EUR']
+        && (!('adminMensual' in precio) || numeroNoNegativo(precio.adminMensual))
+        && (!('impuestoPredial' in precio) || numeroNoNegativo(precio.impuestoPredial))
+        && (!('negociable' in precio) || precio.negociable is bool);
+    }
+
+    function ubicacionValida(ubicacion) {
+      return ubicacion is map
+        && ubicacion.keys().hasAll(['pais', 'departamento', 'ciudad', 'direccion'])
+        && stringNoVacio(ubicacion.pais)
+        && stringNoVacio(ubicacion.departamento)
+        && stringNoVacio(ubicacion.ciudad)
+        && stringNoVacio(ubicacion.direccion)
+        && (!('barrio' in ubicacion) || ubicacion.barrio is string)
+        && (!('codigoPostal' in ubicacion) || ubicacion.codigoPostal is string);
+    }
+
+    function caracteristicasValidas(caracteristicas) {
+      return caracteristicas is map
+        && caracteristicas.keys().hasAll(['habitaciones', 'banos', 'metrosCuadrados', 'parqueaderos', 'amenidades'])
+        && numeroNoNegativo(caracteristicas.habitaciones)
+        && numeroNoNegativo(caracteristicas.banos)
+        && numeroNoNegativo(caracteristicas.metrosCuadrados)
+        && numeroNoNegativo(caracteristicas.parqueaderos)
+        && caracteristicas.amenidades is list
+        && caracteristicas.amenidades.size() <= 60
+        && (!('metrosConstruidos' in caracteristicas) || numeroNoNegativo(caracteristicas.metrosConstruidos))
+        && (!('pisos' in caracteristicas) || numeroNoNegativo(caracteristicas.pisos))
+        && (!('piso' in caracteristicas) || numeroNoNegativo(caracteristicas.piso))
+        && (!('estrato' in caracteristicas) || caracteristicas.estrato in [1, 2, 3, 4, 5, 6])
+        && (!('antiguedad' in caracteristicas) || numeroNoNegativo(caracteristicas.antiguedad))
+        && (!('permiteRentaCorta' in caracteristicas) || caracteristicas.permiteRentaCorta is bool);
+    }
+
+    function propiedadValida(data) {
+      return data is map
+        && data.keys().hasAll([
+          'slug',
+          'codigoPropiedad',
+          'tipo',
+          'modoNegocio',
+          'condicion',
+          'estadoPublicacion',
+          'titulo',
+          'descripcion',
+          'precio',
+          'ubicacion',
+          'caracteristicas',
+          'imagenes',
+          'creadoEn',
+          'actualizadoEn'
+        ])
+        && data.keys().hasOnly([
+          'slug',
+          'codigoPropiedad',
+          'tipo',
+          'modoNegocio',
+          'condicion',
+          'estadoPublicacion',
+          'titulo',
+          'descripcion',
+          'precio',
+          'ubicacion',
+          'caracteristicas',
+          'imagenes',
+          'imagenPrincipal',
+          'tourVirtual',
+          'videoUrl',
+          'seo',
+          'agente',
+          'creadoEn',
+          'actualizadoEn',
+          'publicadoEn',
+          'destacado',
+          'vistas',
+          'tags'
+        ])
+        && stringNoVacio(data.slug)
+        && stringNoVacio(data.codigoPropiedad)
+        && data.tipo in ['casa', 'apartamento', 'apartaestudio', 'finca', 'local', 'oficina', 'terreno', 'bodega']
+        && data.modoNegocio in ['venta', 'alquiler', 'venta_alquiler']
+        && data.condicion in ['nuevo', 'usado', 'sobre_planos']
+        && data.estadoPublicacion in ['activo', 'inactivo', 'vendido', 'arrendado', 'borrador']
+        && stringNoVacio(data.titulo)
+        && stringNoVacio(data.descripcion)
+        && precioValido(data.precio)
+        && ubicacionValida(data.ubicacion)
+        && caracteristicasValidas(data.caracteristicas)
+        && data.imagenes is list
+        && data.imagenes.size() > 0
+        && data.imagenes.size() <= 40
+        && (!('imagenPrincipal' in data) || data.imagenPrincipal is string)
+        && (!('tourVirtual' in data) || data.tourVirtual is string)
+        && (!('videoUrl' in data) || data.videoUrl is string)
+        && data.creadoEn is timestamp
+        && data.actualizadoEn is timestamp
+        && (!('publicadoEn' in data) || data.publicadoEn == null || data.publicadoEn is timestamp)
+        && (!('destacado' in data) || data.destacado is bool)
+        && (!('vistas' in data) || numeroNoNegativo(data.vistas))
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 40));
+    }
+
+    match /propiedades/{propiedadId} {
+      allow get, list: if isAdmin() || resource.data.estadoPublicacion == 'activo';
+      allow create: if isAdmin() && propiedadValida(request.resource.data);
+      allow update: if isAdmin() && propiedadValida(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

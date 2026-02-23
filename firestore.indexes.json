@@ -1,0 +1,77 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "propiedades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "estadoPublicacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "actualizadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "propiedades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "estadoPublicacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "modoNegocio",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "actualizadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "propiedades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "estadoPublicacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tipo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "actualizadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "propiedades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "estadoPublicacion",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "modoNegocio",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tipo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "actualizadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
