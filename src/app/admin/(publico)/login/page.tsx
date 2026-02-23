@@ -1,7 +1,7 @@
 'use client';
 
 import { auth } from '@/lib/firebase/client';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,6 +13,8 @@ interface FormularioLoginAdmin {
 
 const MENSAJE_ERROR_GENERICO =
   'No fue posible iniciar sesión. Verifica tus credenciales e inténtalo de nuevo.';
+const MENSAJE_RESET_GENERICO =
+  'Si el correo está registrado, te llegará un enlace para restablecer la contraseña.';
 
 function extraerCodigoError(error: unknown): string | null {
   if (typeof error !== 'object' || error === null || !('code' in error)) {
@@ -52,10 +54,14 @@ export default function LoginAdminPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [mensajeReset, setMensajeReset] = useState<string | null>(null);
+  const [cargandoReset, setCargandoReset] = useState(false);
 
   const {
     register,
     handleSubmit,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<FormularioLoginAdmin>({
     defaultValues: {
@@ -63,6 +69,40 @@ export default function LoginAdminPage() {
       password: '',
     },
   });
+
+  const handleRestablecerContrasena = async () => {
+    setMensajeReset(null);
+
+    const esEmailValido = await trigger('email');
+    if (!esEmailValido) {
+      return;
+    }
+
+    const email = getValues('email').trim();
+    const next = searchParams.get('next');
+    const url = new URL('/admin/login', window.location.origin);
+
+    if (next?.startsWith('/admin')) {
+      url.searchParams.set('next', next);
+    }
+
+    setCargandoReset(true);
+    try {
+      auth.languageCode = 'es';
+      await sendPasswordResetEmail(auth, email, {
+        url: url.toString(),
+        handleCodeInApp: false,
+      });
+      setMensajeReset(MENSAJE_RESET_GENERICO);
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(error);
+      }
+      setMensajeReset(MENSAJE_RESET_GENERICO);
+    } finally {
+      setCargandoReset(false);
+    }
+  };
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
     setErrorGeneral(null);
@@ -174,6 +214,24 @@ export default function LoginAdminPage() {
           >
             {isSubmitting ? 'Ingresando...' : 'Ingresar al panel'}
           </button>
+
+          <button
+            type="button"
+            onClick={handleRestablecerContrasena}
+            disabled={isSubmitting || cargandoReset}
+            className="w-full text-right text-sm font-medium text-blue-700 transition-colors hover:text-blue-800 disabled:cursor-not-allowed disabled:text-blue-300"
+          >
+            {cargandoReset ? 'Enviando...' : '¿Olvidaste tu contraseña?'}
+          </button>
+
+          {mensajeReset ? (
+            <p
+              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+              aria-live="polite"
+            >
+              {mensajeReset}
+            </p>
+          ) : null}
         </form>
       </section>
     </main>
