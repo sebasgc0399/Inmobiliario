@@ -180,7 +180,7 @@ function FiltrosInternos() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3">
 
         {/* Negocio */}
-        <div className="flex flex-col lg:min-w-[160px] lg:flex-1">
+        <div className="flex flex-col lg:min-w-40 lg:flex-1">
           <label htmlFor="negocio" className={claseLabel}>Negocio</label>
           <SelectPersonalizado
             id="negocio"
@@ -192,7 +192,7 @@ function FiltrosInternos() {
         </div>
 
         {/* Tipo */}
-        <div className="flex flex-col lg:min-w-[160px] lg:flex-1">
+        <div className="flex flex-col lg:min-w-40 lg:flex-1">
           <label htmlFor="tipo" className={claseLabel}>Tipo de propiedad</label>
           <SelectPersonalizado
             id="tipo"
@@ -204,7 +204,7 @@ function FiltrosInternos() {
         </div>
 
         {/* Ciudad */}
-        <div className="flex flex-col lg:min-w-[160px] lg:flex-[1.5]">
+        <div className="flex flex-col lg:min-w-40 lg:flex-[1.5]">
           <label htmlFor="ciudad" className={claseLabel}>Ciudad</label>
           <input
             id="ciudad"
@@ -220,7 +220,7 @@ function FiltrosInternos() {
         <div className="hidden lg:block w-px self-stretch bg-gray-100 mx-1" aria-hidden="true" />
 
         {/* Moneda de visualización */}
-        <div className="flex flex-col lg:min-w-[130px]">
+        <div className="flex flex-col lg:min-w-32.5">
           <label htmlFor="moneda" className={claseLabel}>Moneda de visualización</label>
           <SelectPersonalizado
             id="moneda"
@@ -232,7 +232,7 @@ function FiltrosInternos() {
         </div>
 
         {/* Rango de precio */}
-        <div className="flex flex-col sm:col-span-2 lg:col-span-1 lg:min-w-[240px]">
+        <div className="flex flex-col sm:col-span-2 lg:col-span-1 lg:min-w-60">
           <label className={claseLabel}>
             Rango de precio ({filtros.moneda})
           </label>
