@@ -1,426 +1,486 @@
 # ROADMAP — Panel de Administración IsaHouse
-
-> Documento vivo de planificación del desarrollo del panel de administración.
-> Cada fase es independiente y entregable. El orden es el de prioridad recomendada.
+**Fuente de Verdad Única · Reemplaza ROADMAP_V2.md**
 
 ---
 
-## Estado actual
+## Estado Actual del Proyecto
 
-- [x] Autenticación Firebase (email/contraseña + custom claim `admin`)
-- [x] Protección de rutas con Middleware de Next.js
-- [x] Session cookies HTTP-only (5 días)
-- [x] Página de login con recuperación de contraseña
-- [x] Página personalizada de restablecimiento de contraseña con validación de política
-- [x] Modelo de datos canónico (`src/types/propiedad.ts`)
-- [x] Reglas de seguridad Firestore (validación en 3 capas)
-- [x] Consulta pública de propiedades activas con filtros y conversión de moneda
-- [ ] Layout del panel con navegación
-- [ ] CRUD de propiedades
-- [ ] Carga de imágenes a Firebase Storage
-- [ ] Dashboard con métricas
+### Completado ✅
+- Auth: Firebase Auth + session cookie httpOnly + middleware de rutas
+- Rutas públicas del admin: `/admin/login`, `/admin/restablecer-contrasena`
+- API Routes: `/api/auth/session`, `/api/auth/logout`
+- Firebase client SDK (`src/lib/firebase/client.ts`)
+- Firebase Admin SDK (`src/lib/firebase/admin.ts`) con `server-only`
+- Converter Firestore (`src/lib/firebase/propiedadConverter.ts`)
+- Modelo de datos: `src/types/propiedad.ts`
+- Security headers en `next.config.ts`
+- Home pública con filtros, Suspense y listado de propiedades
 
----
-
-## Fase 1 — Layout y Shell del Panel
-
-**Objetivo:** Crear la estructura visual permanente del panel: navegación lateral, encabezado y área de contenido. Esta fase es el **prerequisito de todo lo demás**.
-
-### Archivos a crear/modificar
-
-| Acción | Archivo | Descripción |
-|--------|---------|-------------|
-| MODIFICAR | `src/app/admin/(privado)/layout.tsx` | Agregar el shell visual conservando la validación de sesión |
-| CREAR | `src/components/admin/SidebarAdmin.tsx` | Navegación lateral (Client Component) |
-| CREAR | `src/components/admin/TopbarAdmin.tsx` | Encabezado con info de sesión y logout |
-| MODIFICAR | `src/app/admin/(privado)/page.tsx` | Dashboard inicial con placeholders |
-
-### Diseño del layout
-
-```
-┌──────────────────────────────────────────────────┐
-│  IsaHouse Admin              usuario@email  [×]  │  ← Topbar
-├─────────────┬────────────────────────────────────┤
-│             │                                    │
-│  Dashboard  │                                    │
-│  Inmuebles  │         CONTENIDO DE PÁGINA        │
-│  + Nuevo    │                                    │
-│             │                                    │
-└─────────────┴────────────────────────────────────┘
-     Sidebar                  Main
-```
-
-### Links de navegación del Sidebar
-
-| Ícono | Etiqueta | Ruta |
-|-------|----------|------|
-| Grid 2×2 | Dashboard | `/admin` |
-| Casa | Inmuebles | `/admin/propiedades` |
-| Más (+) | Nuevo Inmueble | `/admin/propiedades/nueva` |
-
-### Comportamiento responsive
-
-- **Desktop (≥ md):** Sidebar fijo de 240px a la izquierda, contenido ocupa el resto
-- **Mobile (< md):** Sidebar oculto, accesible con botón hamburguesa en el Topbar
-
-### Criterios de aceptación
-
-- [ ] El Sidebar resalta el link activo con `usePathname()`
-- [ ] El layout envuelve correctamente todas las páginas bajo `(privado)`
-- [ ] El botón de cerrar sesión está en el Topbar (reutilizar `BotonCerrarSesion`)
-- [ ] El contenido tiene padding consistente (`max-w-7xl` o `max-w-5xl`)
-- [ ] En mobile el menú es funcional y se cierra al navegar
+### Por implementar ❌
+- Sidebar y shell del panel admin privado
+- CRUD de inmuebles (formulario, galería, Server Actions)
+- Módulo de Leads (bandeja de contactos)
+- Módulo de Auditoría
+- SEO operativo por propiedad
+- Firestore Security Rules
 
 ---
 
-## Fase 2 — Listado de Propiedades (Admin)
+## Decisiones Técnicas Cerradas (Innegociables)
 
-**Objetivo:** Página `/admin/propiedades` que muestre **todas** las propiedades (todos los `estadoPublicacion`), no solo las activas. Con acciones rápidas por fila.
-
-### Archivos a crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `src/app/admin/(privado)/propiedades/page.tsx` | Página del listado (Server Component) |
-| `src/lib/propiedades/obtenerTodasLasPropiedadesAdmin.ts` | Consulta Admin SDK sin filtro de estado |
-
-### Columnas de la tabla
-
-| Columna | Origen en `Propiedad` | Notas |
-|---------|-----------------------|-------|
-| Imagen | `imagenPrincipal` \|\| `imagenes[0]` | Thumbnail 60×60 |
-| Título | `titulo` | Truncado a 1 línea |
-| Tipo / Modo | `tipo` + `modoNegocio` | "Casa · Venta" |
-| Ciudad | `ubicacion.ciudad` | — |
-| Precio | `precio.valor` + `precio.moneda` | Formateado: "$350.000.000 COP" |
-| Estado | `estadoPublicacion` | Badge de color (ver abajo) |
-| Actualizado | `actualizadoEn` | Fecha relativa: "Hace 2 días" |
-| Acciones | — | Editar / Eliminar |
-
-### Badges de estado
-
-| Valor | Color | |
-|-------|-------|-|
-| `borrador` | Gris | No visible públicamente |
-| `activo` | Verde | Visible públicamente |
-| `inactivo` | Amarillo | Publicación pausada |
-| `vendido` | Azul | Cerrado |
-| `arrendado` | Púrpura | Cerrado |
-
-### Funcionalidades de la página
-
-- **Filtro por estado:** Tabs en la parte superior (Todos / Activos / Borradores / Inactivos / Cerrados)
-- **Buscador:** Búsqueda client-side por `titulo` o `codigoPropiedad`
-- **Contador:** "Mostrando X de Y inmuebles"
-- **Botón principal:** "Nuevo Inmueble" (prominente, esquina superior derecha)
-- **Orden por defecto:** `actualizadoEn` descendente
-
-### Criterios de aceptación
-
-- [ ] Muestra propiedades en borrador (invisibles al público)
-- [ ] Click en título o fila lleva a la edición
-- [ ] Cambio de estado desde la tabla con confirmación inline (sin modal complejo)
-- [ ] Eliminar con diálogo de confirmación
-- [ ] La tabla es responsive (en mobile muestra menos columnas)
+| # | Decisión | Detalle |
+|---|----------|---------|
+| 1 | **Mutaciones Firestore** | Server Actions con Admin SDK (`firebase-admin/firestore`). NUNCA desde el cliente. |
+| 2 | **Subida de imágenes** | SDK cliente (`firebase/storage`) con progreso por archivo. Compresión con Canvas API antes de subir (sin librerías externas). |
+| 3 | **Lectura SSR en admin** | Admin SDK en Server Components del panel privado. |
+| 4 | **Validación de sesión** | Helper `src/lib/admin/validarSesionAdmin.ts` en TODAS las Server Actions del admin. |
+| 5 | **Respuestas de acciones** | `ResultadoAccion<T> = { ok: true; data: T } \| { ok: false; error: string }` para todas las Server Actions. |
+| 6 | **Revalidación de caché** | Después de mutaciones de inmuebles: `revalidatePath('/admin')`, `revalidatePath('/admin/propiedades')`, `revalidatePath('/')`, `revalidatePath('/propiedades/[slug]')`. |
+| 7 | **Unicidad de Slug** | Transacción en Firestore. Documentos de reserva en colección `slugUnicos/{slug}` y `codigoUnicos/{codigo}`. |
+| 8 | **Estado inicial** | Todo inmueble inicia como `borrador`. La publicación es siempre explícita. |
+| 9 | **Eliminación** | Irreversible. Se borran primero archivos de Storage, luego documento Firestore, luego reservas de slug/código. |
+| 10 | **Formularios** | React Hook Form con `mode: 'onBlur'`. Prohibido `useState` para campos. |
+| 11 | **Imagen principal** | Botón "Marcar como principal" por imagen en la galería. Campo `imagenPrincipal: string` (URL). |
+| 12 | **Leads - origen** | Híbrido: formulario `/contacto` crea leads automáticamente (`origen: 'formulario_web'`) + admin puede crear manualmente (`origen: 'manual_admin'`). |
 
 ---
 
-## Fase 3 — Formulario de Creación de Propiedades
+## Alcance V1
 
-**Objetivo:** Formulario completo para crear una nueva propiedad cubriendo todos los campos de la interfaz `Propiedad` de `src/types/propiedad.ts`.
+### Incluido ✅
+- Módulo Inmuebles (CRUD completo + galería de imágenes)
+- Módulo Leads (bandeja de contactos + gestión de estados)
+- Módulo Auditoría (registro inmutable de acciones)
+- Módulo SEO Operativo (meta-tags por propiedad)
+- Dashboard con métricas básicas
 
-### Archivos a crear
+### Fuera de alcance ❌
+- Reordenamiento de imágenes por Drag & Drop
+- Papelera de reciclaje / soft-delete
+- Duplicación automática de inmuebles
+- Integración con portales externos (Finca Raíz, Ciencuadras)
+- Pagos o monetización
 
-| Archivo | Descripción |
-|---------|-------------|
-| `src/app/admin/(privado)/propiedades/nueva/page.tsx` | Página contenedora (Server Component) |
-| `src/components/admin/FormularioPropiedad.tsx` | Formulario principal (Client, React Hook Form) |
-| `src/lib/propiedades/crearPropiedad.ts` | Server Action de escritura en Firestore |
-| `src/lib/propiedades/generarSlug.ts` | Genera slug único desde el título |
+---
 
-### Secciones del formulario (tabs o acordeón)
+## Tipos Canónicos por Módulo
 
-```
-┌─ 1. Información Básica ──────────────────────────┐
-│  titulo*          codigoPropiedad*               │
-│  tipo*            modoNegocio*                   │
-│  condicion*       estadoPublicacion*             │
-│  descripcion* (textarea)                         │
-└──────────────────────────────────────────────────┘
+### Ya definidos (`src/types/propiedad.ts`)
+`Propiedad`, `Ubicacion`, `Precio`, `Caracteristicas`, `SEOMetadata`, `Agente`,
+`TipoPropiedad`, `ModoNegocio`, `EstadoPublicacion`, `CondicionInmueble`
 
-┌─ 2. Precio ──────────────────────────────────────┐
-│  precio.valor*    precio.moneda*                 │
-│  precio.negociable (checkbox)                    │
-│  precio.adminMensual    precio.impuestoPredial   │
-└──────────────────────────────────────────────────┘
+### Por crear
 
-┌─ 3. Ubicación ───────────────────────────────────┐
-│  ubicacion.pais (default: Colombia)              │
-│  ubicacion.departamento*  ubicacion.ciudad*      │
-│  ubicacion.barrio         ubicacion.direccion*   │
-│  ubicacion.codigoPostal                          │
-│  coordenadas.latitud   coordenadas.longitud      │
-└──────────────────────────────────────────────────┘
+**`src/types/lead.ts`**
+```typescript
+export type EstadoLead = 'nuevo' | 'contactado' | 'calificado' | 'cerrado' | 'descartado';
+export type OrigenLead = 'formulario_web' | 'manual_admin';
 
-┌─ 4. Características ─────────────────────────────┐
-│  habitaciones*  banos*  parqueaderos*            │
-│  metrosCuadrados*  metrosConstruidos             │
-│  pisos  piso  estrato (1-6)  antiguedad (años)   │
-│  permiteRentaCorta (checkbox)                    │
-│  amenidades (chips: piscina, gimnasio, ascensor…)│
-└──────────────────────────────────────────────────┘
-
-┌─ 5. Imágenes y Media ────────────────────────────┐
-│  Subida múltiple → Firebase Storage              │
-│  Preview de imágenes + selección de principal    │
-│  videoUrl (YouTube, opcional)                    │
-│  tourVirtual (URL 360°, opcional)                │
-└──────────────────────────────────────────────────┘
-
-┌─ 6. Agente ──────────────────────────────────────┐
-│  agente.nombre    agente.telefono (+57…)         │
-│  agente.email     agente.whatsapp                │
-└──────────────────────────────────────────────────┘
-
-┌─ 7. SEO y Extras (colapsado por defecto) ────────┐
-│  seo.metaTitle (max 60 chars + contador)         │
-│  seo.metaDescription (max 160 chars + contador)  │
-│  seo.keywords (tags)                             │
-│  destacado (checkbox)   tags (chips libres)      │
-└──────────────────────────────────────────────────┘
+export interface Lead {
+  id?: string;
+  nombre: string;
+  email: string;
+  telefono?: string;
+  mensaje: string;
+  propiedadSlug?: string;    // Propiedad de interés (opcional)
+  estado: EstadoLead;
+  origen: OrigenLead;
+  notas?: string;            // Notas internas del admin
+  creadoEn: Date;
+  actualizadoEn: Date;
+}
 ```
 
-### Generación automática del slug
+**`src/types/auditoria.ts`**
+```typescript
+export type TipoAccionAdmin =
+  | 'propiedad_creada' | 'propiedad_editada' | 'propiedad_eliminada'
+  | 'propiedad_publicada' | 'propiedad_archivada'
+  | 'lead_creado' | 'lead_actualizado';
 
-- Se genera desde `titulo` al salir del campo (onBlur)
-- Elimina tildes, caracteres especiales, convierte a kebab-case
-- Ejemplo: `"Casa en El Poblado"` → `"casa-en-el-poblado"`
-- Editable manualmente
-- Se verifica unicidad en Firestore antes de guardar
-
-### Flujo de guardado
-
-1. Usuario completa el formulario (puede guardar como borrador parcial)
-2. React Hook Form valida todos los campos requeridos
-3. Se suben las imágenes nuevas a Firebase Storage → se obtienen las URLs
-4. Se escribe el documento en Firestore con `propiedadConverter`
-5. Redirección a `/admin/propiedades` con toast de éxito
-
-### Criterios de aceptación
-
-- [ ] Guarda como `borrador` por defecto (nunca publica automáticamente)
-- [ ] Las imágenes se suben **antes** de guardar el documento Firestore
-- [ ] Errores de validación se muestran campo por campo
-- [ ] `codigoPropiedad` tiene sugerencia automática pero es editable
-- [ ] El slug se auto-genera pero es editable
-- [ ] El formulario es usable en mobile (cada sección se expande/colapsa)
-
----
-
-## Fase 4 — Edición de Propiedades
-
-**Objetivo:** Reutilizar `FormularioPropiedad` para editar una propiedad existente, pre-poblando todos sus campos.
-
-### Archivos a crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `src/app/admin/(privado)/propiedades/[id]/editar/page.tsx` | Server Component que carga la propiedad |
-| `src/lib/propiedades/obtenerPropiedadPorId.ts` | `getDoc()` por ID con `propiedadConverter` |
-| `src/lib/propiedades/actualizarPropiedad.ts` | Server Action de actualización en Firestore |
-
-### Diferencias respecto a creación
-
-| Aspecto | Creación | Edición |
-|---------|----------|---------|
-| Datos iniciales | Vacío / defaults | Pre-populados desde Firestore |
-| `slug` | Auto-generado, editable | **No editable** (evita romper URLs indexadas) |
-| `codigoPropiedad` | Sugerido, editable | Editable |
-| Imágenes | Solo subida | Subida + eliminación individual |
-| `creadoEn` | `serverTimestamp()` | Sin cambios |
-| `actualizadoEn` | `serverTimestamp()` | `serverTimestamp()` |
-
-### Gestión de imágenes en edición
-
-- Las imágenes existentes muestran su thumbnail con botón ✕
-- Al eliminar: se borra de Firebase Storage **y** se remueve de la lista en memoria
-- Imágenes nuevas: se suben al Storage y se agregan a la lista
-- Las imágenes no tocadas no se re-suben
-
-### Criterios de aceptación
-
-- [ ] Todos los campos se pre-populan correctamente
-- [ ] El `slug` es visible pero no editable (campo deshabilitado)
-- [ ] `actualizadoEn` se actualiza con `serverTimestamp()` en cada guardado
-- [ ] Se puede cambiar `estadoPublicacion` desde el formulario
-- [ ] La navegación de vuelta es a `/admin/propiedades`
-
----
-
-## Fase 5 — Cambio de Estado y Eliminación
-
-**Objetivo:** Acciones rápidas desde la tabla del listado sin necesidad de abrir el formulario completo.
-
-### Acciones implementadas
-
-| Acción | Disparador | Comportamiento |
-|--------|-----------|----------------|
-| Cambiar estado | Dropdown en la fila | Actualiza `estadoPublicacion` + `publicadoEn` si aplica |
-| Eliminar | Botón en la fila | Modal de confirmación con título de la propiedad |
-| Destacar / quitar | Toggle en la fila | Cambia `destacado` sin abrir formulario |
-
-### Archivos a crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `src/lib/propiedades/cambiarEstadoPropiedad.ts` | Server Action: actualiza `estadoPublicacion` |
-| `src/lib/propiedades/eliminarPropiedad.ts` | Server Action: borra Storage + Firestore |
-| `src/components/admin/BotonCambiarEstado.tsx` | Client Component con dropdown |
-| `src/components/admin/BotonEliminar.tsx` | Client Component con modal de confirmación |
-
-### Lógica de eliminación (importante)
-
-Al eliminar una propiedad se deben eliminar sus imágenes de Firebase Storage para evitar archivos huérfanos:
-
-```
-1. getDoc(id)  →  obtener URLs de imagenes[]
-2. Extraer path del Storage de cada URL
-3. deleteObject(ref)  →  eliminar cada archivo
-4. deleteDoc(id)  →  eliminar documento Firestore
-5. revalidatePath('/')
-6. revalidatePath('/admin/propiedades')
+export interface EventoAuditoriaAdmin {
+  id?: string;
+  accion: TipoAccionAdmin;
+  entidadId: string;          // ID del documento afectado
+  entidadTipo: 'propiedad' | 'lead';
+  adminUid: string;
+  descripcion: string;        // Ej: "Publicó: Casa en El Poblado (REF-045)"
+  creadoEn: Date;
+}
 ```
 
-### Criterios de aceptación
+---
 
-- [ ] La eliminación es **irreversible** y el modal lo advierte explícitamente
-- [ ] El cambio de estado actualiza el badge en la tabla sin recargar la página completa
-- [ ] Si se activa un borrador (`borrador → activo`), se setea `publicadoEn` con la fecha actual
-- [ ] Si se cambia a `vendido` o `arrendado`, la propiedad deja de ser visible públicamente
+## Fases de Desarrollo
+
+### Fase 0: Fundaciones del Servidor ← Empezar aquí
+
+**Objetivo:** Crear los helpers de servidor que todas las Server Actions del panel usarán.
+
+**Archivos a crear:**
+- `src/lib/admin/validarSesionAdmin.ts`
+- `src/lib/admin/registrarAuditoria.ts`
+- `src/types/lead.ts`
+- `src/types/auditoria.ts`
+
+**Criterios de aceptación:**
+- [ ] `validarSesionAdmin()` verifica sesión + claim admin, lanza error si falla
+- [ ] `registrarAuditoria()` escribe en colección `auditoria` (fire-and-forget)
+- [ ] Tipos de Lead y Auditoría compilan sin errores TypeScript
 
 ---
 
-## Fase 6 — Dashboard con Métricas
+### Fase 1: Shell y Navegación del Panel
 
-**Objetivo:** Página `/admin` con tarjetas de métricas que den visibilidad inmediata del estado del portal.
+**Objetivo:** Construir el layout del panel admin con Sidebar navegable.
 
-### Tarjetas de métricas
+**Archivos a crear/modificar:**
+- `src/app/admin/(privado)/layout.tsx` — Añadir Sidebar al layout existente
+- `src/components/admin/Sidebar.tsx`
+- `src/components/admin/SidebarLink.tsx` — Con estado activo por `usePathname()`
 
-| Métrica | Fuente | Color |
+**Estructura del Sidebar:**
+```
+IsaHouse Admin
+├── Dashboard              /admin
+├── Propiedades           /admin/propiedades
+├── Leads                 /admin/leads
+├── Auditoría             /admin/auditoria
+└── [Cerrar sesión]
+```
+
+**Criterios de aceptación:**
+- [ ] El link activo se resalta con `usePathname()`
+- [ ] Responsivo: sidebar colapsable en mobile
+- [ ] Botón "Cerrar sesión" llama `/api/auth/logout` y redirige a `/admin/login`
+- [ ] Nombre/email del admin visible en el Sidebar
+
+---
+
+### Fase 2: Listado de Inmuebles
+
+**Objetivo:** Tabla de propiedades leída desde Firestore con Admin SDK.
+
+**Archivos a crear:**
+- `src/app/admin/(privado)/propiedades/page.tsx` — Server Component
+- `src/lib/propiedades/obtenerPropiedadesAdmin.ts`
+
+**Columnas de la tabla:**
+
+| Columna | Origen | Notas |
 |---------|--------|-------|
-| Total de inmuebles | `count()` de todos | Gris |
-| Inmuebles activos | `estadoPublicacion == 'activo'` | Verde |
-| En borrador | `estadoPublicacion == 'borrador'` | Amarillo |
-| Inactivos | `estadoPublicacion == 'inactivo'` | Naranja |
-| Vendidos / Arrendados | `estadoPublicacion in ['vendido','arrendado']` | Azul |
-| Destacados | `destacado == true` | Púrpura |
+| Imagen | `imagenPrincipal` | Thumbnail 60×60 con `<Image />` |
+| Código | `codigoPropiedad` | REF-XXX |
+| Título | `titulo` | Truncado a 40 chars |
+| Tipo | `tipo` | Badge |
+| Precio | `precio.valor` | Formateado con `formatearPrecio()` |
+| Estado | `estadoPublicacion` | Badge con color |
+| Actualizado | `actualizadoEn` | Fecha relativa |
+| Acciones | — | Ver, Editar, Eliminar |
 
-### Secciones adicionales del Dashboard
+**Badges de estado:** `borrador`→gris · `activo`→verde · `inactivo`→amarillo · `vendido`→azul · `arrendado`→morado
 
-- **Inmuebles recientes:** Últimos 5 modificados (con link de edición)
-- **Borradores pendientes:** Hasta 5 borradores sin publicar
-- **Acceso rápido:** Botón prominente "Publicar nuevo inmueble"
-
-### Archivos a crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `src/lib/propiedades/obtenerMetricasAdmin.ts` | `Promise.all` de consultas paralelas |
-| `src/components/admin/TarjetaMetrica.tsx` | Componente reutilizable (número + etiqueta + color) |
-
-### Criterios de aceptación
-
-- [ ] Todas las métricas se calculan en una sola llamada paralela (`Promise.all`)
-- [ ] El Dashboard es un Server Component (sin estado en cliente)
-- [ ] Cada sección tiene su propio `Suspense` con skeleton de carga
-- [ ] Los números son clicables y llevan al listado con el filtro aplicado
+**Criterios de aceptación:**
+- [ ] Server Component (sin `"use client"`)
+- [ ] Sin propiedades: muestra estado vacío con CTA para crear
+- [ ] Tabla usable en mobile
+- [ ] Botón "Nueva propiedad" navega a `/admin/propiedades/nueva`
 
 ---
 
-## Mapa de dependencias entre fases
+### Fase 3: Creación de Inmueble
 
+**Objetivo:** Formulario completo de alta de propiedad con subida de imágenes y Server Action transaccional.
+
+**Archivos a crear:**
+- `src/app/admin/(privado)/propiedades/nueva/page.tsx`
+- `src/actions/propiedades/crearPropiedad.ts`
+- `src/components/admin/formulario-propiedad/FormularioPropiedad.tsx`
+- `src/components/admin/formulario-propiedad/SeccionBasica.tsx`
+- `src/components/admin/formulario-propiedad/SeccionUbicacion.tsx`
+- `src/components/admin/formulario-propiedad/SeccionCaracteristicas.tsx`
+- `src/components/admin/formulario-propiedad/SeccionPrecio.tsx`
+- `src/components/admin/formulario-propiedad/GaleriaImagenes.tsx`
+- `src/lib/utils/generarSlug.ts` — Normalización NFKD del título
+
+**Flujo de guardado:**
 ```
-Fase 1 — Layout y Shell (PREREQUISITO)
-    │
-    ▼
-Fase 2 — Listado de Propiedades
-    │
-    ▼
-Fase 3 — Formulario de Creación
-    │                    ↑
-    ▼                    │ (reutiliza FormularioPropiedad)
-Fase 4 — Edición ────────┘
-    │
-    ▼
-Fase 5 — Cambio de Estado / Eliminación
-    │
-    ▼
-Fase 6 — Dashboard con Métricas
+1. React Hook Form valida (mode: 'onBlur')
+2. GaleriaImagenes sube imágenes con SDK cliente → devuelve URLs
+   - Compresión con Canvas API antes de subir
+   - Progreso individual por archivo
+   - Botón "Marcar como principal" por imagen
+3. Client Component llama crearPropiedad(data) Server Action
+4. crearPropiedad():
+   a. validarSesionAdmin() — lanza si no autorizado
+   b. Genera slug con generarSlug(titulo)
+   c. Transacción Firestore:
+      · Verifica slugUnicos/{slug} no existe
+      · Verifica codigoUnicos/{codigo} no existe
+      · Escribe propiedades/{id} con estadoPublicacion: 'borrador'
+      · Reserva slugUnicos/{slug} y codigoUnicos/{codigo}
+   d. registrarAuditoria('propiedad_creada', ...)
+   e. revalidatePath(...)
+   f. Devuelve ResultadoAccion<{ id, slug }>
+5. Toast de éxito → redirige a /admin/propiedades
 ```
 
-Las fases 3, 4 y 5 comparten `FormularioPropiedad` y las funciones de escritura en Firestore/Storage.
-
----
-
-## Decisiones técnicas transversales
-
-### Mutaciones en Firestore (Fases 3, 4, 5)
-
-- Usar **Server Actions** de Next.js (`'use server'`) para todas las escrituras
-- Las Server Actions se llaman directamente desde los Client Components del formulario
-- Después de cada mutación: `revalidatePath('/admin/propiedades')` y `revalidatePath('/')`
-- **No** usar Firebase Admin SDK para escrituras (Admin SDK es solo para lectura SSR y auth)
-- Las escrituras del admin usan el SDK de cliente (`firebase/firestore`) autenticado
-
-### Carga de imágenes (Fases 3, 4)
-
-- SDK cliente de Firebase Storage (`firebase/storage`)
-- Path: `propiedades/{codigoPropiedad}/{timestamp}-{nombreSanitizado}`
-- Límite: máximo 40 imágenes por propiedad (validado en Firestore Rules)
+**Restricciones de galería:**
 - Formatos: `image/jpeg`, `image/png`, `image/webp`
-- El componente de subida mostrará barra de progreso por archivo
-- Las imágenes se redimensionan/comprimen en el cliente antes de subir (Canvas API, sin librerías)
+- Límite: 40 imágenes por propiedad
+- Path Storage: `propiedades/{codigoPropiedad}/{timestamp}-{nombreSanitizado}`
 
-### Generación de slug (`src/lib/propiedades/generarSlug.ts`)
+**Criterios de aceptación:**
+- [ ] `estadoPublicacion` inicia en `'borrador'`
+- [ ] Errores visibles por campo
+- [ ] Slug auto-generado desde título, editable, único
+- [ ] Progreso de subida de imágenes individual
+- [ ] Errores de Server Action visibles en UI (no solo consola)
+- [ ] Transacción garantiza unicidad de slug y código
 
-```typescript
-// Ejemplo de transformaciones:
-// "Casa en El Poblado, Medellín (150 m²)" → "casa-en-el-poblado-medellin-150-m2"
-// Pasos: normalizar NFKD → quitar diacríticos → lowercase → reemplazar no-alfanumérico por "-" → trim "-"
+---
+
+### Fase 4: Edición de Inmueble
+
+**Objetivo:** Edición de todos los campos + gestión de galería de imágenes existentes.
+
+**Archivos a crear:**
+- `src/app/admin/(privado)/propiedades/[id]/editar/page.tsx` — Server Component
+- `src/actions/propiedades/actualizarPropiedad.ts`
+- `src/lib/propiedades/obtenerPropiedadAdmin.ts`
+
+**Diferencias vs. Creación:**
+- Formulario pre-rellado desde Server Component
+- Galería muestra imágenes existentes + permite agregar/eliminar
+- Eliminar imagen: borra de Storage primero → actualiza array en Firestore
+- Si el slug cambia: actualiza `slugUnicos` (borra viejo, crea nuevo en transacción)
+
+**Criterios de aceptación:**
+- [ ] Formulario pre-rellado con todos los campos actuales
+- [ ] Cambio de slug valida unicidad con debounce 500ms
+- [ ] Eliminar imagen individual requiere confirmación + borra de Storage
+- [ ] Auditoría registra `propiedad_editada`
+
+---
+
+### Fase 5: Estado, Destacado y Eliminación
+
+**Objetivo:** Acciones de ciclo de vida de una propiedad.
+
+**Archivos a crear:**
+- `src/actions/propiedades/cambiarEstadoPropiedad.ts`
+- `src/actions/propiedades/toggleDestacado.ts`
+- `src/actions/propiedades/eliminarPropiedad.ts`
+- `src/components/admin/ModalConfirmacion.tsx`
+
+**Transiciones de estado válidas:**
+- `borrador` → `activo` (publicar) | `inactivo` (archivar)
+- `activo` → `inactivo` | `vendido` | `arrendado`
+- `inactivo` → `activo`
+- `vendido` / `arrendado` → `inactivo`
+
+**Flujo de eliminación irreversible:**
+```
+1. Admin clic "Eliminar" → Modal pide confirmar escribiendo "ELIMINAR"
+2. eliminarPropiedad():
+   a. validarSesionAdmin()
+   b. Listar y borrar archivos Storage en propiedades/{codigo}/*
+      → Si falla: abortar, NO tocar Firestore
+   c. Transacción Firestore:
+      · Borra propiedades/{id}
+      · Borra slugUnicos/{slug}
+      · Borra codigoUnicos/{codigo}
+   d. registrarAuditoria('propiedad_eliminada', ...)
+   e. revalidatePath(...) → redirige a /admin/propiedades
 ```
 
-### Formulario multi-sección
+**Criterios de aceptación:**
+- [ ] Cambio de estado: badge actualizado en UI sin recarga
+- [ ] Eliminación: si Storage falla, Firestore NO se toca
+- [ ] Modal exige escribir "ELIMINAR" para confirmar
+- [ ] Toggle destacado actualiza campo `destacado` en Firestore
 
-- React Hook Form con `useForm` y `Controller` para selects y campos complejos
-- Secciones implementadas como acordeón (un `useState` con el id de la sección activa)
-- Validación: `mode: 'onBlur'` para no mostrar errores mientras se escribe
-- Los campos opcionales nunca muestran error si están vacíos
+---
 
-### Revalidación de caché de Next.js
+### Fase 6: Leads (Bandeja de Contactos)
 
-Después de crear / editar / eliminar / cambiar estado:
-```typescript
-revalidatePath('/');                     // Listado público de propiedades
-revalidatePath('/admin/propiedades');    // Listado admin
-revalidatePath(`/propiedades/${slug}`);  // Detalle de la propiedad (cuando exista)
+**Objetivo:** CRM básico para gestionar contactos del sitio web y leads manuales.
+
+**Archivos a crear:**
+- `src/app/admin/(privado)/leads/page.tsx` — Server Component
+- `src/app/admin/(privado)/leads/nueva/page.tsx`
+- `src/actions/leads/crearLead.ts` — Usada por formulario web Y admin
+- `src/actions/leads/actualizarLead.ts`
+- `src/lib/leads/obtenerLeads.ts`
+- Modificar `src/app/contacto/page.tsx` — Para llamar `crearLead`
+
+**Integración formulario web:**
+- El formulario `/contacto` llama a `crearLead` Server Action (sin validación de sesión admin)
+- Se crea con `origen: 'formulario_web'`, `estado: 'nuevo'` automáticamente
+- La Server Action pública solo valida los datos del formulario
+
+**Vista admin:**
+- Columnas: Nombre, Email, Teléfono, Propiedad de interés, Estado, Fecha, Acciones
+- Filtros por estado y origen
+- Cambio de estado inline
+- Campo de notas internas (textarea)
+- Creación manual con `origen: 'manual_admin'`
+
+**Criterios de aceptación:**
+- [ ] Formulario web → Lead creado en Firestore (sin sesión admin requerida)
+- [ ] Admin puede crear lead manualmente
+- [ ] Admin puede cambiar estado y agregar notas
+- [ ] Tabla ordenada por `creadoEn DESC`
+- [ ] Auditoría registra `lead_creado` y `lead_actualizado`
+
+---
+
+### Fase 7: Auditoría
+
+**Objetivo:** Vista de solo lectura del historial de acciones del admin.
+
+**Archivos a crear:**
+- `src/app/admin/(privado)/auditoria/page.tsx` — Server Component
+
+**Vista:**
+- Columnas: Fecha, Acción, Tipo entidad, Descripción, Admin UID
+- Ordenada por `creadoEn DESC`
+- Últimos 100 eventos (paginación simple)
+- Solo lectura
+
+**Criterios de aceptación:**
+- [ ] Eventos de Fases 3, 4, 5 y 6 aparecen correctamente
+- [ ] Ordenados del más reciente al más antiguo
+- [ ] Sin acciones de edición o eliminación
+
+---
+
+### Fase 8: SEO Operativo + Dashboard
+
+**Objetivo:** Edición de meta-tags por propiedad y dashboard con métricas básicas.
+
+**Archivos a crear/modificar:**
+- `src/components/admin/formulario-propiedad/SeccionSEO.tsx` — Añadir a FormularioPropiedad
+- `src/app/admin/(privado)/page.tsx` — Reescribir con métricas reales
+
+**SEO por propiedad (en el formulario de creación/edición):**
+- `seo.metaTitle` (max 60 chars con contador)
+- `seo.metaDescription` (max 160 chars con contador)
+- `seo.keywords` (input de tags)
+- Preview estimado del snippet de Google
+
+**Dashboard:**
+- Total propiedades activas
+- Leads nuevos (últimos 7 días)
+- Total vistas (suma de campo `vistas`)
+- Cards de acceso rápido: Nueva propiedad, Ver leads, Ver auditoría
+
+**Criterios de aceptación:**
+- [ ] Meta-tags se guardan y se usan en `generateMetadata()` de la ruta pública de la propiedad
+- [ ] Dashboard muestra datos reales de Firestore
+- [ ] Contadores del dashboard se actualizan con revalidación
+
+---
+
+## Mapa de Dependencias
+
+```
+Fase 0 → Fase 1 → Fase 2 → Fase 3 → Fase 4 → Fase 5
+                                               ↓
+                                      Fase 6 → Fase 7 → Fase 8
+```
+
+Fase 6 puede iniciarse en paralelo con Fase 5 si el formulario de creación (Fase 3) está estable.
+
+---
+
+## Estructura de Archivos Objetivo
+
+```
+src/
+├── actions/
+│   ├── propiedades/
+│   │   ├── crearPropiedad.ts
+│   │   ├── actualizarPropiedad.ts
+│   │   ├── eliminarPropiedad.ts
+│   │   ├── cambiarEstadoPropiedad.ts
+│   │   └── toggleDestacado.ts
+│   └── leads/
+│       ├── crearLead.ts
+│       └── actualizarLead.ts
+├── app/
+│   └── admin/
+│       └── (privado)/
+│           ├── page.tsx                    Dashboard
+│           ├── layout.tsx                  Con Sidebar
+│           ├── propiedades/
+│           │   ├── page.tsx
+│           │   ├── nueva/page.tsx
+│           │   └── [id]/editar/page.tsx
+│           ├── leads/
+│           │   ├── page.tsx
+│           │   └── nueva/page.tsx
+│           └── auditoria/
+│               └── page.tsx
+├── components/
+│   └── admin/
+│       ├── Sidebar.tsx
+│       ├── SidebarLink.tsx
+│       ├── ModalConfirmacion.tsx
+│       └── formulario-propiedad/
+│           ├── FormularioPropiedad.tsx
+│           ├── SeccionBasica.tsx
+│           ├── SeccionUbicacion.tsx
+│           ├── SeccionCaracteristicas.tsx
+│           ├── SeccionPrecio.tsx
+│           ├── SeccionSEO.tsx
+│           └── GaleriaImagenes.tsx
+├── lib/
+│   ├── admin/
+│   │   ├── validarSesionAdmin.ts
+│   │   └── registrarAuditoria.ts
+│   ├── propiedades/
+│   │   ├── obtenerPropiedadesAdmin.ts
+│   │   └── obtenerPropiedadAdmin.ts
+│   ├── leads/
+│   │   └── obtenerLeads.ts
+│   └── utils/
+│       └── generarSlug.ts
+└── types/
+    ├── propiedad.ts      (ya existe)
+    ├── lead.ts           (por crear en Fase 0)
+    ├── auditoria.ts      (por crear en Fase 0)
+    └── index.ts
 ```
 
 ---
 
-## Fuera del alcance de estas 6 fases
+## Riesgos y Mitigaciones
 
-Las siguientes funcionalidades quedan deliberadamente fuera para mantener el foco:
-
-| Feature | Razón |
-|---------|-------|
-| Múltiples roles / usuarios | Solo hay un tipo de admin. Añadir roles es complejidad accidental por ahora. |
-| Módulo de mensajes de clientes | Requiere diseño de UX propio. Se puede agregar como Fase 7. |
-| Analytics avanzados | Google Analytics / Firebase Analytics cubre esto sin código adicional. |
-| Blog / contenido editorial | Fuera del dominio de la plataforma inmobiliaria. |
-| Sistema de reservas o citas | Requiere notificaciones, calendario. Alcance muy amplio. |
-| Integración con portales externos | MLS, Finca Raíz, etc. Requiere acuerdos comerciales. |
-| Módulo de documentos y contratos | Requiere almacenamiento y firma digital. |
+| Riesgo | Impacto | Mitigación |
+|--------|---------|------------|
+| Fallo en borrado de Storage antes de Firestore | Alto | Storage primero; si falla, no se toca Firestore |
+| Race condition en unicidad de slug | Alto | Transacción con colección `slugUnicos` |
+| Server Actions admin sin autenticación | Crítico | `validarSesionAdmin()` en TODAS las Server Actions del admin |
+| Fugas de módulos servidor al cliente | Alto | `'server-only'` en todos los módulos de Admin SDK |
+| Timeout en subida de imágenes grandes | Medio | Compresión Canvas API + límite 40 imágenes |
 
 ---
 
-*Última actualización: Fase 1 por comenzar.*
+## Verificación End-to-End por Fase
+
+| Fase | Test de verificación |
+|------|---------------------|
+| 0 | TypeScript compila sin errores. `validarSesionAdmin` rechaza sesión inválida. |
+| 1 | Login → Dashboard → Sidebar con links activos → Logout redirige a login |
+| 2 | Admin → `/admin/propiedades` → Tabla vacía con CTA visible |
+| 3 | Crear inmueble → Subir 3 imágenes → Marcar principal → Guardar → Aparece en tabla con estado borrador |
+| 4 | Editar inmueble → Cambiar título → Verificar slug actualizado → Eliminar imagen → Verificar Storage |
+| 5 | Publicar inmueble → Aparece en home pública. Eliminar → No existe en Firestore ni Storage |
+| 6 | Formulario `/contacto` → Verificar Lead en admin → Cambiar estado → Agregar nota |
+| 7 | Ver `/admin/auditoria` → Historial con acciones de pruebas anteriores |
+| 8 | Editar SEO de una propiedad → Inspeccionar `<head>` en ruta pública → Dashboard con métricas |
+
+---
+
+*Última actualización: Fase 0 por comenzar.*

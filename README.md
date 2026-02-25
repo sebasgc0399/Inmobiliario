@@ -1,75 +1,122 @@
 # Pagina Web Inmobiliaria
 
 Plataforma inmobiliaria orientada a SEO y conversion para Colombia, construida con Next.js App Router y Firebase.
-El estado actual prioriza listado publico de propiedades con filtros, seguridad en reglas y base lista para panel admin.
 
-## 1. Features principales
+Estado actual del proyecto:
+- Listado publico de propiedades con filtros por query params.
+- Render server-first para Home y consulta de datos con Admin SDK.
+- Autenticacion de admin con Firebase Auth + cookie de sesion `__session`.
+- Proteccion de rutas `/admin/*` via middleware.
+- CI en GitHub Actions con jobs de lint y build.
 
-- SEO-first con Server Components y renderizado dinamico en Home.
-  Evidencia: `src/app/page.tsx` (`runtime = 'nodejs'`, `dynamic = 'force-dynamic'`) y `src/components/ListadoPropiedadesAsync.tsx`.
-- Busqueda y filtros por query params (`negocio`, `tipo`, `ciudad`, `moneda`, `precioMin`, `precioMax`).
-  Evidencia: `src/components/FiltrosBusqueda.tsx` (usa `router.replace`) y `src/app/page.tsx` (`parseMoneda`, `parseModoNegocio`, `parseTipoPropiedad`).
-- Lectura de datos reales desde Firestore para el listado publico.
-  Evidencia: `src/lib/propiedades/obtenerPropiedadesPublicas.ts` (`collection('propiedades')`, `where(...)`, `orderBy(...)`).
-- Multi-divisa (COP, USD, EUR) para visualizacion y filtros de precio.
-  Evidencia: `src/lib/currency.ts` y `src/components/CardPropiedad.tsx`.
-- Skeleton/loading para mejorar UX durante carga de resultados.
-  Evidencia: `src/app/loading.tsx` y `src/components/SkeletonListado.tsx`.
-- Optimizacion de imagenes con `next/image` y dominios remotos permitidos.
-  Evidencia: `next.config.ts` (`remotePatterns`), `src/components/CardPropiedad.tsx`, `src/components/HeroBanner.tsx`.
-- Seguridad de acceso a datos con reglas e indices versionados en repo.
+## 1. Features principales (estado real)
+
+- Home SEO-first con Server Components y render dinamico.
+  Evidencia: `src/app/page.tsx`, `src/components/ListadoPropiedadesAsync.tsx`.
+- Filtros por URL: `negocio`, `tipo`, `ciudad`, `moneda`, `precioMin`, `precioMax`.
+  Evidencia: `src/components/FiltrosBusqueda.tsx`, `src/app/page.tsx`.
+- Lectura de propiedades publicas desde Firestore (`propiedades`) usando converter tipado.
+  Evidencia: `src/lib/propiedades/obtenerPropiedadesPublicas.ts`, `src/lib/firebase/propiedadConverter.ts`.
+- Soporte de visualizacion multi-moneda (COP, USD, EUR).
+  Evidencia: `src/lib/currency.ts`, `src/components/CardPropiedad.tsx`.
+- Carga visual con skeleton y loading route-level.
+  Evidencia: `src/components/SkeletonListado.tsx`, `src/app/loading.tsx`.
+- Imagenes optimizadas con `next/image` y dominios permitidos en config.
+  Evidencia: `src/components/CardPropiedad.tsx`, `src/components/HeroBanner.tsx`, `next.config.ts`.
+- Seguridad de reglas e indices de Firebase versionada en repo.
   Evidencia: `firestore.rules`, `storage.rules`, `firestore.indexes.json`, `firebase.json`.
+- Login admin, cierre de sesion y restablecimiento de contrasena.
+  Evidencia: `src/app/admin/(publico)/login/page.tsx`, `src/app/api/auth/session/route.ts`, `src/app/api/auth/logout/route.ts`, `src/app/admin/(publico)/restablecer-contrasena/page.tsx`.
 
 ## 2. Stack tecnologico
 
-- Next.js: `16.1.6` (ver `package.json`)
-- React: `19.2.3` (ver `package.json`)
-- React DOM: `19.2.3` (ver `package.json`)
-- Firebase Web SDK: `^12.9.0` (ver `package.json`)
-- Firebase Admin SDK: `^13.6.1` (ver `package.json`)
-- TypeScript: `^5` (ver `package.json`)
-- Tailwind CSS: `^4` (ver `package.json`)
-- Firebase CLI (`firebase-tools`): `^15.7.0` (ver `package.json`)
-- Package manager del repo: `npm` (evidencia: `package-lock.json`)
+Versiones segun `package.json`:
 
-## 3. Arquitectura
+- Next.js: `16.1.6`
+- React: `19.2.3`
+- React DOM: `19.2.3`
+- Firebase Web SDK: `^12.9.0`
+- Firebase Admin SDK: `^13.6.1`
+- React Hook Form: `^7.71.2`
+- TypeScript: `^5`
+- Tailwind CSS: `^4`
+- Firebase CLI (`firebase-tools`): `^15.7.0`
+- Package manager: `npm` (`package-lock.json` presente)
 
-### Server Components vs Client Components
+## 3. Arquitectura y patrones
 
-- Server Components (por defecto en render y datos):
+### 3.1 Server Components vs Client Components
+
+- Server Components por defecto para render y datos:
   - `src/app/page.tsx`
   - `src/components/ListadoPropiedadesAsync.tsx`
   - `src/lib/propiedades/obtenerPropiedadesPublicas.ts`
-- Client Components (solo interactividad):
+- Client Components para interactividad:
   - `src/components/FiltrosBusqueda.tsx`
   - `src/components/Navbar.tsx`
   - `src/components/SelectPersonalizado.tsx`
+  - `src/app/admin/(publico)/login/page.tsx`
+  - `src/app/admin/(publico)/restablecer-contrasena/page.tsx`
 
-### Serializacion de datos Firebase
+### 3.2 Modelo de datos canonico
 
-- Conversion `Timestamp <-> Date` centralizada en:
-  - `src/lib/firebase/propiedadConverter.ts` (`toFirestore`, `fromFirestore`)
+Fuente de verdad del dominio:
+- `src/types/propiedad.ts`
 
-### Modelo de datos canonico
+Tipos auxiliares y export:
+- `src/types/filtros.ts`
+- `src/types/index.ts`
 
-- Fuente de verdad del dominio inmobiliario:
-  - `src/types/propiedad.ts`
-- Tipos auxiliares de filtros server:
-  - `src/types/filtros.ts`
-- Export central de tipos:
-  - `src/types/index.ts`
+### 3.3 Serializacion Firebase
 
-Resumen de entidades principales en `src/types/propiedad.ts`:
-- Tipos de dominio: `TipoPropiedad`, `ModoNegocio`, `EstadoPublicacion`, `Moneda`, `CondicionInmueble`, `Estrato`.
-- Subinterfaces: `Ubicacion`, `Precio`, `Caracteristicas`, `SEOMetadata`, `Agente`.
-- Entidad principal: `Propiedad`.
+Conversion `Timestamp <-> Date` centralizada en:
+- `src/lib/firebase/propiedadConverter.ts`
 
-## 4. Estructura del proyecto
+### 3.4 Auth admin y seguridad de rutas
+
+- Middleware protege `matcher: ['/admin/:path*']`.
+  Evidencia: `src/middleware.ts`.
+- Rutas publicas admin permitidas sin cookie:
+  - `/admin/login`
+  - `/admin/restablecer-contrasena`
+- Sesion admin por cookie `__session` creada en API.
+  Evidencia: `src/app/api/auth/session/route.ts`.
+- Layout privado valida cookie y claim `admin` antes de renderizar.
+  Evidencia: `src/app/admin/(privado)/layout.tsx`.
+
+## 4. Rutas disponibles
+
+Mapeo de rutas fisicas con route groups (no visibles en URL):
+
+- `src/app/page.tsx` -> `/`
+- `src/app/nosotros/page.tsx` -> `/nosotros`
+- `src/app/contacto/page.tsx` -> `/contacto`
+- `src/app/admin/(publico)/login/page.tsx` -> `/admin/login`
+- `src/app/admin/(publico)/restablecer-contrasena/page.tsx` -> `/admin/restablecer-contrasena`
+- `src/app/admin/(privado)/page.tsx` -> `/admin`
+- `src/app/api/auth/session/route.ts` -> `POST /api/auth/session`
+- `src/app/api/auth/logout/route.ts` -> `POST /api/auth/logout`
+
+Ruta enlazada desde UI pero aun no implementada en `src/app`:
+- `/propiedades/[slug]` (enlace desde `src/components/CardPropiedad.tsx`).
+
+## 5. Estructura del proyecto
 
 ```text
 .
+|- .github/
+|  |- workflows/
+|     |- ci.yml
+|- scripts/
+|  |- asignar-claim-admin.mjs
 |- src/
 |  |- app/
+|  |  |- admin/
+|  |  |  |- (privado)/
+|  |  |  |- (publico)/
+|  |  |- api/auth/
+|  |  |- contacto/
+|  |  |- nosotros/
 |  |  |- layout.tsx
 |  |  |- loading.tsx
 |  |  |- page.tsx
@@ -78,195 +125,227 @@ Resumen de entidades principales en `src/types/propiedad.ts`:
 |  |  |- firebase/
 |  |  |- propiedades/
 |  |- types/
-|- scripts/
-|  |- asignar-claim-admin.mjs
+|  |- middleware.ts
 |- .env.example
+|- .firebaserc
 |- firebase.json
-|- firestore.rules
-|- storage.rules
 |- firestore.indexes.json
+|- firestore.rules
+|- next.config.ts
+|- package.json
+|- storage.rules
+|- vercel.json
 ```
 
-Nota: en `src/app` actualmente solo existe la ruta `/` (home), ademas de `layout` y `loading`.
+## 6. Requisitos
 
-## 5. Requisitos
-
-- Node.js: TODO (no hay `engines` en `package.json` ni `.nvmrc`).
+- Node.js 20 recomendado (validado en CI con `actions/setup-node@v4` y `node-version: "20"`).
 - npm.
-- Proyecto Firebase configurado (Firestore + Storage + Auth).
-- Firebase CLI autenticado para desplegar reglas/indices.
+- Proyecto Firebase con Auth, Firestore y Storage configurados.
+- Firebase CLI autenticado para despliegue de reglas/indices.
 
-## 6. Setup local
+Nota: aun no hay `engines` en `package.json` ni `.nvmrc`.
 
-1. Clona el repositorio.
+## 7. Setup local
+
+1. Clonar el repositorio.
 
 ```bash
 git clone <URL_DEL_REPOSITORIO>
 cd inmobiliario
 ```
 
-TODO: definir URL oficial del repositorio en este README cuando se publique externamente.
-
-2. Instala dependencias.
+2. Instalar dependencias.
 
 ```bash
 npm install
 ```
 
-3. Crea variables locales.
+3. Crear variables locales.
 
 ```bash
 cp .env.example .env.local
 ```
 
-4. Ejecuta en desarrollo.
+4. Levantar desarrollo.
 
 ```bash
 npm run dev
 ```
 
-5. Abre `http://localhost:3000`.
+5. Abrir `http://localhost:3000`.
 
-Nota operativa: el script `auth:set-admin` usa variables del shell/entorno y no carga `.env` automaticamente (`scripts/asignar-claim-admin.mjs`).
+Nota operativa:
+- `scripts/asignar-claim-admin.mjs` usa variables del entorno de shell y no carga `.env` automaticamente.
 
-## 7. Variables de entorno
+## 8. Variables de entorno
 
 | Variable | Tipo | Uso | Donde se usa |
 |---|---|---|---|
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Publica | Config cliente Firebase | `src/lib/firebase/client.ts` |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Publica | Auth domain del proyecto | `src/lib/firebase/client.ts` |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Publica | Project ID cliente | `src/lib/firebase/client.ts` |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Publica | Bucket para SDK cliente | `src/lib/firebase/client.ts` |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Publica | Sender ID de Firebase | `src/lib/firebase/client.ts` |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Publica | App ID web de Firebase | `src/lib/firebase/client.ts` |
-| `FIREBASE_PROJECT_ID` | Privada | Credencial Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
-| `FIREBASE_CLIENT_EMAIL` | Privada | Credencial Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
-| `FIREBASE_PRIVATE_KEY` | Privada | Llave privada para Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
-| `FIREBASE_STORAGE_BUCKET` | Privada | Bucket en Admin SDK | `src/lib/firebase/admin.ts` |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Publica | Bucket cliente | `src/lib/firebase/client.ts` |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Publica | Sender ID | `src/lib/firebase/client.ts` |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Publica | App ID web | `src/lib/firebase/client.ts` |
+| `FIREBASE_PROJECT_ID` | Privada | Credenciales Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
+| `FIREBASE_CLIENT_EMAIL` | Privada | Credenciales Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
+| `FIREBASE_PRIVATE_KEY` | Privada | Llave privada Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
+| `FIREBASE_STORAGE_BUCKET` | Privada | Bucket Admin SDK | `src/lib/firebase/admin.ts` |
+| `CI_NEXT_PUBLIC_ENV` | CI secret | Contenido para generar `.env.local` en pipeline CI | `.github/workflows/ci.yml` |
 
 Plantilla base: `.env.example`.
 
-## 8. Firebase
+Importante:
+- `CI_NEXT_PUBLIC_ENV` es un secreto de CI para build, no una variable runtime obligatoria del server en produccion.
 
-### Productos usados
+## 9. Firebase
+
+### 9.1 Productos usados
 
 - Auth:
-  - Inicializacion base cliente disponible en `src/lib/firebase/client.ts`.
-  - Script de custom claims admin en `scripts/asignar-claim-admin.mjs`.
+  - Cliente inicializado en `src/lib/firebase/client.ts`.
+  - Flujos admin en `src/app/admin/(publico)/login/page.tsx`.
+  - Session cookie admin en `src/app/api/auth/session/route.ts`.
 - Firestore:
-  - Lectura de propiedades publicas en `src/lib/propiedades/obtenerPropiedadesPublicas.ts`.
+  - Lectura de listados en `src/lib/propiedades/obtenerPropiedadesPublicas.ts`.
 - Storage:
-  - Inicializacion en cliente y admin (`src/lib/firebase/client.ts`, `src/lib/firebase/admin.ts`).
+  - Cliente/Admin en `src/lib/firebase/client.ts` y `src/lib/firebase/admin.ts`.
 
-### Colecciones y convenciones
+### 9.2 Colecciones y convenciones
 
-- Coleccion confirmada en codigo: `propiedades` (`src/lib/propiedades/obtenerPropiedadesPublicas.ts`).
-- Convencion de Storage (segun reglas): `propiedades/{propiedadId}/{archivo=**}` (`storage.rules`).
-- TODO: documentar/implementar colecciones adicionales (ej. `leads`) cuando existan en codigo.
+- Coleccion confirmada en codigo: `propiedades`.
+- Convencion de Storage segun reglas: `propiedades/{propiedadId}/{archivo=**}`.
 
-### Reglas e indices
+### 9.3 Reglas, indices y config
 
 - Reglas Firestore: `firestore.rules`
 - Reglas Storage: `storage.rules`
 - Indices Firestore: `firestore.indexes.json`
 - Config Firebase CLI: `firebase.json`
+- Proyecto por defecto versionado: `.firebaserc` (sin exponer ID en este README)
 
-## 9. Scripts disponibles
+## 10. APIs de autenticacion admin
 
-Scripts exactos de `package.json`:
+### 10.1 `POST /api/auth/session`
 
-- `npm run dev`: inicia entorno de desarrollo Next.js.
-- `npm run build`: genera build de produccion.
-- `npm run start`: levanta servidor sobre build de produccion.
-- `npm run lint`: ejecuta ESLint.
-- `npm run firebase:deploy:rules`: despliega reglas de Firestore y Storage.
-- `npm run firebase:deploy:indexes`: despliega indices de Firestore.
-- `npm run firebase:deploy:seguridad`: despliega reglas + indices.
-- `npm run auth:set-admin -- <UID>`: asigna claim `admin=true` a un usuario Firebase Auth.
+Archivo: `src/app/api/auth/session/route.ts`
 
-## 10. Deploy
+- Request JSON:
 
-Estado actual documentado por evidencia en repo:
+```json
+{ "idToken": "<firebase-id-token>" }
+```
 
-- Config de Firebase para reglas/indices: `firebase.json`.
-- Comandos de despliegue disponibles en scripts npm.
-- No existe `.firebaserc` en el repo (proyecto no fijado en codigo).
-- No existe `vercel.json` en el repo.
-- No existe carpeta `.github/workflows` para CI/CD.
+- Comportamiento:
+  - Valida body.
+  - Verifica `idToken` y claim `admin`.
+  - Crea cookie `__session` (`httpOnly`, `sameSite=lax`, `path=/`).
 
-Flujo real disponible hoy:
+- Estados documentados en codigo:
+  - `200`: sesion creada (`{ ok: true }`)
+  - `400`: body invalido o `idToken` ausente
+  - `401`: token invalido/revocado o error auth al crear sesion
+  - `403`: usuario sin claim admin
+  - `500`: error interno no tipificado de auth
 
-1. Configurar variables de entorno en el entorno de despliegue.
-2. Desplegar reglas e indices:
+### 10.2 `POST /api/auth/logout`
+
+Archivo: `src/app/api/auth/logout/route.ts`
+
+- Comportamiento:
+  - Responde `{ ok: true }`.
+  - Invalida cookie `__session` con `maxAge: 0`.
+
+## 11. Scripts disponibles
+
+Scripts exactos en `package.json`:
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run firebase:deploy:rules`
+- `npm run firebase:deploy:indexes`
+- `npm run firebase:deploy:seguridad`
+- `npm run auth:set-admin -- <UID>`
+
+## 12. Deploy y CI/CD
+
+Estado real del repositorio:
+
+- Existe `vercel.json` con framework `nextjs`.
+- Existe `.firebaserc` con proyecto por defecto para Firebase CLI.
+- Existe `.github/workflows/ci.yml`.
+
+Flujo disponible hoy:
+
+1. App Next.js: despliegue compatible con Vercel (config minima presente en `vercel.json`).
+2. Seguridad Firebase (reglas + indices):
 
 ```bash
 npm run firebase:deploy:seguridad
 ```
 
-Vercel: recomendado para desplegar la app Next.js, pero no esta configurado de forma explicita en el repositorio.
+3. CI de GitHub Actions (`.github/workflows/ci.yml`):
+- Trigger: `push` y `pull_request`.
+- Job `lint`: `npm ci` + `npm run lint`.
+- Job `build`: depende de `lint`, usa Node 20, crea `.env.local` desde `secrets.CI_NEXT_PUBLIC_ENV`, y ejecuta `npm run build`.
 
-TODO:
-- definir proveedor oficial de deploy.
-- definir pipeline CI/CD y versionarlo.
-
-## 11. Troubleshooting
-
-### FIREBASE_PRIVATE_KEY y saltos de linea
-
-Problema: error de credenciales por formato incorrecto de llave privada.
-
-Este proyecto espera `FIREBASE_PRIVATE_KEY` con saltos escapados (`\\n`) y luego los transforma internamente a saltos reales:
-
-- `src/lib/firebase/admin.ts` usa `replace(/\\n/g, '\n')`.
-- `scripts/asignar-claim-admin.mjs` usa `replace(/\\n/g, '\n')`.
-
-Si ves errores de parseo de llave:
-- revisa que la variable no haya perdido comillas ni caracteres.
-- valida que incluya `-----BEGIN PRIVATE KEY-----` y `-----END PRIVATE KEY-----`.
-
-### Error de `next/image` por dominio no permitido
-
-Problema: imagen remota bloqueada por configuracion de Next.js.
-
-Verifica `remotePatterns` en `next.config.ts`. Dominios permitidos actualmente:
-
-- `images.unsplash.com`
-- `firebasestorage.googleapis.com`
-- `storage.googleapis.com`
-
-Si usas otro dominio de imagen, debes agregarlo en `next.config.ts`.
-
-## 12. Convenciones del repo
+## 13. Convenciones del repo
 
 Basado en `AGENTS.md`:
 
 - Dominio de negocio en espanol para tipos/componentes (`Propiedad`, `CardPropiedad`, etc.).
-- Server Components por defecto; Client Components solo cuando hay interactividad.
+- Server Components por defecto; Client Components solo para interactividad.
 - TypeScript estricto y evitar `any`.
-- Seguridad Firebase con reglas y validaciones de entrada.
+- Seguridad Firebase por reglas y validacion de entrada.
 - Uso de `<Image />` de Next.js para optimizacion de imagenes.
 
-React Hook Form:
+Estado actual de formularios:
+- React Hook Form ya se usa en:
+  - `src/app/admin/(publico)/login/page.tsx`
+  - `src/app/admin/(publico)/restablecer-contrasena/page.tsx`
+- `src/components/FiltrosBusqueda.tsx` aun usa `useState` para manejo de filtros.
 
-- Es obligatorio por convencion para formularios (segun `AGENTS.md`).
-- TODO detectado: `src/components/FiltrosBusqueda.tsx` maneja filtros con `useState` y no usa React Hook Form.
+## 14. Roadmap tecnico pendiente (solo gaps reales)
 
-## 13. Roadmap / TODOs
+- Implementar ruta de detalle publica `/propiedades/[slug]` enlazada desde `CardPropiedad`.
+- Implementar formulario real en `/contacto` (hoy es placeholder visual).
+- Agregar script `test` en `package.json` y pruebas de integracion para flujos criticos.
+- Fijar version de Node en `package.json` (`engines`) o agregar `.nvmrc`.
+- Revisar si filtros de Home deben migrar a React Hook Form segun convencion global.
 
-- Implementar rutas enlazadas en UI pero no presentes en `src/app`:
-  - `/nosotros`, `/contacto`, `/admin`, `/admin/login` (enlaces en `src/components/Navbar.tsx` y `src/components/Footer.tsx`).
-  - `/propiedades/[slug]` (enlace en `src/components/CardPropiedad.tsx`).
-- Implementar proteccion de rutas admin con `middleware.ts`.
-- Implementar formularios con React Hook Form en componentes interactivos.
-- Agregar script `test` y pruebas de integracion para flujos criticos.
-- Agregar capturas/GIF y metricas Lighthouse verificadas.
-- Definir version de Node.js en `package.json` (`engines`) o `.nvmrc`.
+## 15. Troubleshooting
 
-## 14. Casos de prueba de esta documentacion
+### 15.1 `FIREBASE_PRIVATE_KEY` y saltos de linea
 
-1. Todo archivo referenciado existe en el repo.
-2. Cada feature en la seccion de features tiene evidencia de archivo/comportamiento.
-3. Versiones de stack coinciden literalmente con `package.json`.
-4. Deploy documenta solo lo existente (`firebase.json`, reglas, indices, scripts).
-5. Troubleshooting cubre `FIREBASE_PRIVATE_KEY` y `next/image`.
-6. Convenciones incluyen obligatoriedad de React Hook Form y el TODO detectado.
+El proyecto espera `FIREBASE_PRIVATE_KEY` con `\\n` escapados y lo transforma internamente con `replace(/\\n/g, '\n')` en:
+- `src/lib/firebase/admin.ts`
+- `scripts/asignar-claim-admin.mjs`
+
+Si hay error de parseo:
+- Verifica delimitadores `-----BEGIN PRIVATE KEY-----` y `-----END PRIVATE KEY-----`.
+- Verifica que la variable no perdio comillas ni caracteres.
+
+### 15.2 Error de `next/image` por dominio remoto
+
+Si una imagen remota falla, revisar `images.remotePatterns` en `next.config.ts`.
+Dominios actualmente permitidos:
+- `images.unsplash.com`
+- `firebasestorage.googleapis.com`
+- `storage.googleapis.com`
+
+### 15.3 Errores por variables faltantes
+
+- Cliente Firebase falla si falta alguna `NEXT_PUBLIC_FIREBASE_*` requerida en `src/lib/firebase/client.ts`.
+- Admin SDK falla si faltan `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET` en `src/lib/firebase/admin.ts`.
+
+## 16. Checklist de validacion documental
+
+1. No hay afirmaciones de inexistencia para `.firebaserc`, `vercel.json` o `.github/workflows/ci.yml`.
+2. Toda ruta documentada existe en `src/app` o `src/app/api`.
+3. Todo archivo referenciado existe en el repo.
+4. Versiones y scripts coinciden con `package.json`.
+5. Seccion Deploy refleja Firebase + Vercel + CI actuales.
+6. Seccion Roadmap solo lista pendientes no implementados.
