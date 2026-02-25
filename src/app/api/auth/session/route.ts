@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 const NOMBRE_COOKIE_SESION = '__session';
-const DURACION_SESION_MS = 5 * 24 * 60 * 60 * 1000;
+const DURACION_SESION_MS = 1 * 24 * 60 * 60 * 1000;
 const DURACION_SESION_SEGUNDOS = DURACION_SESION_MS / 1000;
 
 interface CuerpoSesion {
