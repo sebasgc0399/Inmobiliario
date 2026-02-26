@@ -4,8 +4,15 @@ import { Suspense, useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ModoNegocio, TipoPropiedad, Moneda } from '@/types';
 import SelectPersonalizado from '@/components/SelectPersonalizado';
+import ubicacionesData from '@/data/ubicaciones.json';
 
-// ── Opciones ──────────────────────────────────────────────────────────────────
+// ── Tipos de ubicación inferidos del JSON ─────────────────────────────────────
+
+type DepartamentoKey = keyof typeof ubicacionesData['Colombia'];
+const PAIS = 'Colombia' as const;
+const departamentos = Object.keys(ubicacionesData[PAIS]) as DepartamentoKey[];
+
+// ── Opciones estáticas ────────────────────────────────────────────────────────
 
 const opcionesNegocio: { valor: ModoNegocio | ''; etiqueta: string }[] = [
   { valor: '', etiqueta: 'Compra o alquiler' },
@@ -31,15 +38,44 @@ const opcionesMoneda: { valor: Moneda; etiqueta: string; simbolo: string }[] = [
   { valor: 'EUR', etiqueta: '€ EUR', simbolo: '€' },
 ];
 
+const opcionesHabitaciones: { valor: string; etiqueta: string }[] = [
+  { valor: '', etiqueta: 'Cualquier número' },
+  { valor: '1', etiqueta: '1+' },
+  { valor: '2', etiqueta: '2+' },
+  { valor: '3', etiqueta: '3+' },
+  { valor: '4', etiqueta: '4+' },
+];
+
+const opcionesEstrato: { valor: string; etiqueta: string }[] = [
+  { valor: '', etiqueta: 'Cualquier estrato' },
+  { valor: '1', etiqueta: 'Estrato 1' },
+  { valor: '2', etiqueta: 'Estrato 2' },
+  { valor: '3', etiqueta: 'Estrato 3' },
+  { valor: '4', etiqueta: 'Estrato 4' },
+  { valor: '5', etiqueta: 'Estrato 5' },
+  { valor: '6', etiqueta: 'Estrato 6' },
+];
+
+const opcionesOrden: { valor: string; etiqueta: string }[] = [
+  { valor: '', etiqueta: 'Más recientes' },
+  { valor: 'precio_asc', etiqueta: 'Precio: menor a mayor' },
+  { valor: 'precio_desc', etiqueta: 'Precio: mayor a menor' },
+  { valor: 'destacados', etiqueta: 'Destacados primero' },
+];
+
 // ── Estado del formulario ─────────────────────────────────────────────────────
 
 interface Filtros {
   negocio: string;
   tipo: string;
-  ciudad: string;
+  departamento: string;
+  municipio: string;
   moneda: Moneda;
   precioMin: string;
   precioMax: string;
+  habitaciones: string;
+  estrato: string;
+  orden: string;
 }
 
 // ── ChipFiltro ────────────────────────────────────────────────────────────────
@@ -73,14 +109,24 @@ function FiltrosInternos() {
   const [filtros, setFiltros] = useState<Filtros>({
     negocio: searchParams.get('negocio') ?? '',
     tipo: searchParams.get('tipo') ?? '',
-    ciudad: searchParams.get('ciudad') ?? '',
+    departamento: searchParams.get('departamento') ?? '',
+    municipio: searchParams.get('municipio') ?? '',
     moneda: (searchParams.get('moneda') as Moneda) ?? 'COP',
     precioMin: searchParams.get('precioMin') ?? '',
     precioMax: searchParams.get('precioMax') ?? '',
+    habitaciones: searchParams.get('habitaciones') ?? '',
+    estrato: searchParams.get('estrato') ?? '',
+    orden: searchParams.get('orden') ?? '',
   });
+
+  // Municipios disponibles según el departamento seleccionado (valor derivado, no estado)
+  const municipiosDisponibles: string[] = filtros.departamento
+    ? (ubicacionesData[PAIS][filtros.departamento as DepartamentoKey] ?? [])
+    : [];
 
   const filtrosActivos = Object.entries(filtros).filter(([k, v]) => {
     if (k === 'moneda') return v !== 'COP';
+    if (k === 'orden') return false; // orden no reduce resultados, no cuenta como filtro activo
     return Boolean(v);
   }).length;
 
@@ -96,10 +142,14 @@ function FiltrosInternos() {
       const sp = new URLSearchParams();
       if (filtros.negocio) sp.set('negocio', filtros.negocio);
       if (filtros.tipo) sp.set('tipo', filtros.tipo);
-      if (filtros.ciudad.trim()) sp.set('ciudad', filtros.ciudad.trim());
+      if (filtros.departamento) sp.set('departamento', filtros.departamento);
+      if (filtros.municipio.trim()) sp.set('municipio', filtros.municipio.trim());
       sp.set('moneda', filtros.moneda);
       if (filtros.precioMin) sp.set('precioMin', filtros.precioMin);
       if (filtros.precioMax) sp.set('precioMax', filtros.precioMax);
+      if (filtros.habitaciones) sp.set('habitaciones', filtros.habitaciones);
+      if (filtros.estrato) sp.set('estrato', filtros.estrato);
+      if (filtros.orden) sp.set('orden', filtros.orden);
       startTransition(() => {
         router.replace(`/?${sp.toString()}`);
       });
@@ -110,16 +160,32 @@ function FiltrosInternos() {
   function cambiar<K extends keyof Filtros>(campo: K, valor: string) {
     setFiltros((prev) => {
       const siguiente = { ...prev, [campo]: valor };
+      // Al cambiar moneda, limpiar precios
       if (campo === 'moneda') {
         siguiente.precioMin = '';
         siguiente.precioMax = '';
+      }
+      // Al cambiar departamento, resetear municipio
+      if (campo === 'departamento') {
+        siguiente.municipio = '';
       }
       return siguiente;
     });
   }
 
   function limpiar() {
-    setFiltros({ negocio: '', tipo: '', ciudad: '', moneda: 'COP', precioMin: '', precioMax: '' });
+    setFiltros({
+      negocio: '',
+      tipo: '',
+      departamento: '',
+      municipio: '',
+      moneda: 'COP',
+      precioMin: '',
+      precioMax: '',
+      habitaciones: '',
+      estrato: '',
+      orden: '',
+    });
   }
 
   // ── Estilos reutilizables ───────────────────────────────────────────────────
@@ -143,7 +209,7 @@ function FiltrosInternos() {
       }`}
       aria-label="Filtros de búsqueda"
     >
-      {/* Barra de progreso superior — wrapper con overflow-hidden para respetar border-radius */}
+      {/* Barra de progreso superior */}
       <div className="absolute inset-x-0 top-0 rounded-t-2xl overflow-hidden" aria-hidden="true">
         <div
           className={`h-0.5 bg-blue-500 transition-opacity duration-300 ${
@@ -176,11 +242,11 @@ function FiltrosInternos() {
         )}
       </div>
 
-      {/* Campos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3">
+      {/* Fila 1: Clasificación y ubicación */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 
         {/* Negocio */}
-        <div className="flex flex-col lg:min-w-40 lg:flex-1">
+        <div className="flex flex-col">
           <label htmlFor="negocio" className={claseLabel}>Negocio</label>
           <SelectPersonalizado
             id="negocio"
@@ -192,7 +258,7 @@ function FiltrosInternos() {
         </div>
 
         {/* Tipo */}
-        <div className="flex flex-col lg:min-w-40 lg:flex-1">
+        <div className="flex flex-col">
           <label htmlFor="tipo" className={claseLabel}>Tipo de propiedad</label>
           <SelectPersonalizado
             id="tipo"
@@ -203,31 +269,82 @@ function FiltrosInternos() {
           />
         </div>
 
-        {/* Ciudad */}
-        <div className="flex flex-col lg:min-w-40 lg:flex-[1.5]">
-          <label htmlFor="ciudad" className={claseLabel}>Ciudad</label>
-          <input
-            id="ciudad"
-            type="text"
-            placeholder="Ej: Medellín, Bogotá..."
-            value={filtros.ciudad}
-            onChange={(e) => cambiar('ciudad', e.target.value)}
-            className={claseInput + bordeActivo(filtros.ciudad)}
+        {/* Departamento */}
+        <div className="flex flex-col">
+          <label htmlFor="departamento" className={claseLabel}>Departamento</label>
+          <SelectPersonalizado
+            id="departamento"
+            valor={filtros.departamento}
+            onChange={(val) => cambiar('departamento', val)}
+            opciones={[
+              { valor: '', etiqueta: 'Todos los departamentos' },
+              ...departamentos.map((d) => ({ valor: d, etiqueta: d })),
+            ]}
+            activo={!!filtros.departamento}
           />
         </div>
 
-        {/* Divisor visual en pantallas grandes */}
-        <div className="hidden lg:block w-px self-stretch bg-gray-100 mx-1" aria-hidden="true" />
+        {/* Municipio — deshabilitado hasta elegir departamento */}
+        <div className="flex flex-col">
+          <label htmlFor="municipio" className={claseLabel}>Municipio</label>
+          <SelectPersonalizado
+            id="municipio"
+            valor={filtros.municipio}
+            onChange={(val) => cambiar('municipio', val)}
+            opciones={
+              municipiosDisponibles.length > 0
+                ? [
+                    { valor: '', etiqueta: 'Todos los municipios' },
+                    ...municipiosDisponibles.map((m) => ({ valor: m, etiqueta: m })),
+                  ]
+                : [{ valor: '', etiqueta: 'Primero elige un departamento.' }]
+            }
+            activo={!!filtros.municipio}
+            disabled={!filtros.departamento}
+          />
+        </div>
 
-        {/* Moneda de visualización */}
-        <div className="flex flex-col lg:min-w-32.5">
-          <label htmlFor="moneda" className={claseLabel}>Moneda de visualización</label>
+      </div>
+
+      {/* Divisor */}
+      <div className="border-t border-gray-100 mt-3 pt-3" />
+
+      {/* Fila 2: Filtros secundarios */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3">
+
+        {/* Moneda */}
+        <div className="flex flex-col lg:min-w-32">
+          <label htmlFor="moneda" className={claseLabel}>Moneda</label>
           <SelectPersonalizado
             id="moneda"
             valor={filtros.moneda}
             onChange={(val) => cambiar('moneda', val)}
             opciones={opcionesMoneda}
             activo={filtros.moneda !== 'COP'}
+          />
+        </div>
+
+        {/* Habitaciones */}
+        <div className="flex flex-col lg:min-w-36">
+          <label htmlFor="habitaciones" className={claseLabel}>Habitaciones</label>
+          <SelectPersonalizado
+            id="habitaciones"
+            valor={filtros.habitaciones}
+            onChange={(val) => cambiar('habitaciones', val)}
+            opciones={opcionesHabitaciones}
+            activo={!!filtros.habitaciones}
+          />
+        </div>
+
+        {/* Estrato */}
+        <div className="flex flex-col lg:min-w-36">
+          <label htmlFor="estrato" className={claseLabel}>Estrato</label>
+          <SelectPersonalizado
+            id="estrato"
+            valor={filtros.estrato}
+            onChange={(val) => cambiar('estrato', val)}
+            opciones={opcionesEstrato}
+            activo={!!filtros.estrato}
           />
         </div>
 
@@ -261,6 +378,21 @@ function FiltrosInternos() {
           </div>
         </div>
 
+        {/* Divisor visual en pantallas grandes */}
+        <div className="hidden lg:block w-px self-stretch bg-gray-100 mx-1" aria-hidden="true" />
+
+        {/* Ordenamiento */}
+        <div className="flex flex-col lg:min-w-44">
+          <label htmlFor="orden" className={claseLabel}>Ordenar por</label>
+          <SelectPersonalizado
+            id="orden"
+            valor={filtros.orden}
+            onChange={(val) => cambiar('orden', val)}
+            opciones={opcionesOrden}
+            activo={!!filtros.orden}
+          />
+        </div>
+
       </div>
 
       {/* Chips de filtros activos */}
@@ -279,8 +411,23 @@ function FiltrosInternos() {
               onRemover={() => cambiar('tipo', '')}
             />
           )}
-          {filtros.ciudad && (
-            <ChipFiltro etiqueta={filtros.ciudad} onRemover={() => cambiar('ciudad', '')} />
+          {filtros.departamento && (
+            <ChipFiltro etiqueta={filtros.departamento} onRemover={() => cambiar('departamento', '')} />
+          )}
+          {filtros.municipio && (
+            <ChipFiltro etiqueta={filtros.municipio} onRemover={() => cambiar('municipio', '')} />
+          )}
+          {filtros.habitaciones && (
+            <ChipFiltro
+              etiqueta={`${filtros.habitaciones}+ hab.`}
+              onRemover={() => cambiar('habitaciones', '')}
+            />
+          )}
+          {filtros.estrato && (
+            <ChipFiltro
+              etiqueta={`Estrato ${filtros.estrato}`}
+              onRemover={() => cambiar('estrato', '')}
+            />
           )}
           {filtros.moneda !== 'COP' && !filtros.precioMin && !filtros.precioMax && (
             <ChipFiltro

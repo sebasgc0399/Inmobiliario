@@ -46,7 +46,8 @@ export interface Ubicacion {
   pais: string;
   /** Departamento / estado / provincia */
   departamento: string;
-  ciudad: string;
+  /** Municipio o ciudad */
+  municipio: string;
   barrio?: string;
   direccion: string;
   codigoPostal?: string;

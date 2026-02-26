@@ -46,7 +46,7 @@ export async function generateMetadata({
     propiedad.seo?.metaDescription ??
     `${propiedad.tipo.charAt(0).toUpperCase() + propiedad.tipo.slice(1)} en ${
       propiedad.modoNegocio === 'venta' ? 'venta' : 'alquiler'
-    } en ${propiedad.ubicacion.ciudad}. ${propiedad.descripcion.slice(0, 150)}...`;
+    } en ${propiedad.ubicacion.municipio}. ${propiedad.descripcion.slice(0, 150)}...`;
   const imagen = propiedad.imagenPrincipal ?? propiedad.imagenes[0];
 
   return {
@@ -77,8 +77,8 @@ async function PropiedadesRelacionadas({
   slugExcluir,
   moneda,
 }: PropiedadesRelacionadasProps) {
-  // Intentar por ciudad primero
-  let relacionadas = await obtenerPropiedadesPublicas({ moneda, ciudad: ciudadActual });
+  // Intentar por municipio primero
+  let relacionadas = await obtenerPropiedadesPublicas({ moneda, municipio: ciudadActual });
   relacionadas = relacionadas.filter((p) => p.slug !== slugExcluir);
 
   // Si no hay resultados, intentar por tipo de propiedad
@@ -207,7 +207,7 @@ export default async function PaginaDetallePropiedad({
 
   const ubicacionCompleta = [
     propiedad.ubicacion.barrio,
-    propiedad.ubicacion.ciudad,
+    propiedad.ubicacion.municipio,
     propiedad.ubicacion.departamento,
   ]
     .filter(Boolean)
@@ -537,7 +537,7 @@ export default async function PaginaDetallePropiedad({
       {/* Propiedades relacionadas */}
       <Suspense fallback={null}>
         <PropiedadesRelacionadas
-          ciudadActual={propiedad.ubicacion.ciudad}
+          ciudadActual={propiedad.ubicacion.municipio}
           tipoActual={propiedad.tipo}
           slugExcluir={propiedad.slug}
           moneda={moneda}

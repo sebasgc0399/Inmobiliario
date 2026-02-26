@@ -3,7 +3,7 @@ import FiltrosBusqueda from '@/components/FiltrosBusqueda';
 import HeroBanner from '@/components/HeroBanner';
 import ListadoPropiedadesAsync from '@/components/ListadoPropiedadesAsync';
 import SkeletonListado from '@/components/SkeletonListado';
-import type { FiltrosBusquedaServidor, Moneda, ModoNegocio, TipoPropiedad } from '@/types';
+import type { Estrato, FiltrosBusquedaServidor, Moneda, ModoNegocio, OrdenPropiedades, TipoPropiedad } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,10 +11,14 @@ export const dynamic = 'force-dynamic';
 interface SearchParams {
   negocio?: string;
   tipo?: string;
-  ciudad?: string;
+  municipio?: string;
+  departamento?: string;
   moneda?: string;
   precioMin?: string;
   precioMax?: string;
+  habitaciones?: string;
+  estrato?: string;
+  orden?: string;
 }
 
 const MONEDAS_VALIDAS: ReadonlyArray<Moneda> = ['COP', 'USD', 'EUR'];
@@ -67,6 +71,33 @@ function parseNumeroPositivo(valor?: string): number | undefined {
   return numero;
 }
 
+const ORDENES_VALIDOS: ReadonlyArray<OrdenPropiedades> = [
+  'recientes',
+  'precio_asc',
+  'precio_desc',
+  'destacados',
+];
+const ESTRATOS_VALIDOS = [1, 2, 3, 4, 5, 6] as const;
+
+function parseOrden(valor?: string): OrdenPropiedades | undefined {
+  if (valor && ORDENES_VALIDOS.includes(valor as OrdenPropiedades)) {
+    return valor as OrdenPropiedades;
+  }
+  return undefined;
+}
+
+function parseEstrato(valor?: string): Estrato | undefined {
+  const n = Number(valor);
+  if (ESTRATOS_VALIDOS.includes(n as Estrato)) return n as Estrato;
+  return undefined;
+}
+
+function parseHabitacionesMin(valor?: string): number | undefined {
+  const n = Number(valor);
+  if (Number.isInteger(n) && n >= 1 && n <= 10) return n;
+  return undefined;
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -79,18 +110,26 @@ export default async function Home({
     moneda: monedaActual,
     negocio: parseModoNegocio(params.negocio),
     tipo: parseTipoPropiedad(params.tipo),
-    ciudad: params.ciudad?.trim() || undefined,
+    municipio: params.municipio?.trim() || undefined,
+    departamento: params.departamento?.trim() || undefined,
     precioMin: parseNumeroPositivo(params.precioMin),
     precioMax: parseNumeroPositivo(params.precioMax),
+    habitacionesMin: parseHabitacionesMin(params.habitaciones),
+    estrato: parseEstrato(params.estrato),
+    orden: parseOrden(params.orden),
   };
 
   const keyFiltros = [
     params.negocio,
     params.tipo,
-    params.ciudad,
+    params.municipio,
+    params.departamento,
     params.moneda,
     params.precioMin,
     params.precioMax,
+    params.habitaciones,
+    params.estrato,
+    params.orden,
   ].join('|');
 
   return (

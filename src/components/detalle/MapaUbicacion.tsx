@@ -7,16 +7,16 @@ interface Props {
 }
 
 export default function MapaUbicacion({ ubicacion }: Props) {
-  const { coordenadas, barrio, ciudad, pais } = ubicacion;
+  const { coordenadas, barrio, municipio, pais } = ubicacion;
 
   // Si hay coordenadas exactas se usan para mayor precisión; si no, búsqueda por texto
   const src = coordenadas
     ? `https://maps.google.com/maps?q=${coordenadas.latitud},${coordenadas.longitud}&output=embed&z=15`
     : `https://maps.google.com/maps?q=${encodeURIComponent(
-        [barrio, ciudad, pais].filter(Boolean).join(', '),
+        [barrio, municipio, pais].filter(Boolean).join(', '),
       )}&output=embed&z=13`;
 
-  const etiquetaUbicacion = [barrio, ciudad].filter(Boolean).join(', ');
+  const etiquetaUbicacion = [barrio, municipio].filter(Boolean).join(', ');
 
   return (
     <div className="rounded-2xl overflow-hidden border border-gray-200 aspect-video w-full bg-gray-100">

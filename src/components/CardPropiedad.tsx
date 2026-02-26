@@ -116,7 +116,7 @@ export default function CardPropiedad({ propiedad, monedaUsuario }: Props) {
 
   const imagen = imagenPrincipal ?? imagenes[0] ?? '/placeholder-propiedad.jpg';
   const badge = badgeConfig[modoNegocio];
-  const ubicacionTexto = [ubicacion.barrio, ubicacion.ciudad]
+  const ubicacionTexto = [ubicacion.barrio, ubicacion.municipio]
     .filter(Boolean)
     .join(', ');
 

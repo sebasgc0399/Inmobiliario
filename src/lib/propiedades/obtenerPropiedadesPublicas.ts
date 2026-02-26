@@ -28,10 +28,20 @@ function aplicarFiltrosOrdenYLimite(
     resultado = resultado.filter((propiedad) => propiedad.tipo === filtros.tipo);
   }
 
-  if (filtros.ciudad) {
-    const ciudadFiltro = filtros.ciudad.toLowerCase();
+  if (filtros.municipio) {
+    const municipioFiltro = filtros.municipio.toLowerCase();
     resultado = resultado.filter((propiedad) =>
-      propiedad.ubicacion.ciudad.toLowerCase().includes(ciudadFiltro),
+      propiedad.ubicacion.municipio.toLowerCase().includes(municipioFiltro),
+    );
+  }
+
+  // NOTA V2 (+1000 props): departamento, estrato y habitacionesMin deberán migrarse
+  // a índices compuestos en Firestore cuando el volumen lo requiera.
+
+  if (filtros.departamento) {
+    const deptoFiltro = filtros.departamento.toLowerCase();
+    resultado = resultado.filter((propiedad) =>
+      propiedad.ubicacion.departamento.toLowerCase() === deptoFiltro,
     );
   }
 
@@ -55,9 +65,42 @@ function aplicarFiltrosOrdenYLimite(
     });
   }
 
-  return [...resultado]
-    .sort((a, b) => b.actualizadoEn.getTime() - a.actualizadoEn.getTime())
-    .slice(0, LIMITE_RESULTADOS);
+  if (typeof filtros.habitacionesMin === 'number') {
+    resultado = resultado.filter(
+      (propiedad) => propiedad.caracteristicas.habitaciones >= filtros.habitacionesMin!,
+    );
+  }
+
+  if (filtros.estrato !== undefined) {
+    resultado = resultado.filter(
+      (propiedad) => propiedad.caracteristicas.estrato === filtros.estrato,
+    );
+  }
+
+  const orden = filtros.orden ?? 'recientes';
+  if (orden === 'recientes') {
+    resultado = [...resultado].sort((a, b) => b.actualizadoEn.getTime() - a.actualizadoEn.getTime());
+  } else if (orden === 'precio_asc') {
+    resultado = [...resultado].sort(
+      (a, b) =>
+        convertirMoneda(a.precio.valor, a.precio.moneda, filtros.moneda) -
+        convertirMoneda(b.precio.valor, b.precio.moneda, filtros.moneda),
+    );
+  } else if (orden === 'precio_desc') {
+    resultado = [...resultado].sort(
+      (a, b) =>
+        convertirMoneda(b.precio.valor, b.precio.moneda, filtros.moneda) -
+        convertirMoneda(a.precio.valor, a.precio.moneda, filtros.moneda),
+    );
+  } else if (orden === 'destacados') {
+    resultado = [...resultado].sort((a, b) => {
+      if (a.destacado && !b.destacado) return -1;
+      if (!a.destacado && b.destacado) return 1;
+      return b.actualizadoEn.getTime() - a.actualizadoEn.getTime();
+    });
+  }
+
+  return resultado.slice(0, LIMITE_RESULTADOS);
 }
 
 export async function obtenerPropiedadesPublicas(

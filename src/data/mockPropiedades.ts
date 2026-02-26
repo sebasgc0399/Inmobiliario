@@ -21,7 +21,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Antioquia',
-      ciudad: 'Medellín',
+      municipio: 'Medellín',
       barrio: 'El Poblado',
       direccion: 'Calle 10 # 43E-20, El Poblado',
     },
@@ -67,7 +67,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Cundinamarca',
-      ciudad: 'Bogotá',
+      municipio: 'Bogotá',
       barrio: 'Chapinero Alto',
       direccion: 'Carrera 7 # 68-15, Chapinero',
     },
@@ -112,7 +112,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Antioquia',
-      ciudad: 'Guatapé',
+      municipio: 'Guatapé',
       barrio: 'Sector El Peñol',
       direccion: 'Vereda El Roble, Guatapé',
     },
@@ -157,7 +157,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Antioquia',
-      ciudad: 'Medellín',
+      municipio: 'Medellín',
       barrio: 'Laureles',
       direccion: 'Circular 74 # 35-12, Laureles',
     },
@@ -203,7 +203,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Bolívar',
-      ciudad: 'Cartagena',
+      municipio: 'Cartagena',
       barrio: 'Bocagrande',
       direccion: 'Avenida 1 # 6-32, Bocagrande',
     },
@@ -248,7 +248,7 @@ export const propiedadesMock: Propiedad[] = [
     ubicacion: {
       pais: 'Colombia',
       departamento: 'Cundinamarca',
-      ciudad: 'Bogotá',
+      municipio: 'Bogotá',
       barrio: 'Usaquén',
       direccion: 'Calle 119 # 6-20, Usaquén',
     },

@@ -1,0 +1,59 @@
+{
+  "Colombia": {
+    "Antioquia": [
+      "Medellín",
+      "Envigado",
+      "Sabaneta",
+      "Itagüí",
+      "Bello",
+      "Rionegro",
+      "La Ceja",
+      "El Retiro",
+      "Copacabana",
+      "Guarne",
+      "Guatapé",
+      "Marinilla",
+      "El Carmen de Viboral",
+      "La Estrella"
+    ],
+    "Cundinamarca": [
+      "Bogotá",
+      "Chía",
+      "Cajicá",
+      "Sopó",
+      "La Calera",
+      "Zipaquirá",
+      "Facatativá",
+      "Tabio",
+      "Tenjo",
+      "Cota"
+    ],
+    "Bolívar": [
+      "Cartagena",
+      "Turbaco",
+      "Santa Rosa de Lima"
+    ],
+    "Valle del Cauca": [
+      "Cali",
+      "Palmira",
+      "Jamundí",
+      "Buga",
+      "Yumbo",
+      "Cartago"
+    ],
+    "Atlántico": [
+      "Barranquilla",
+      "Soledad",
+      "Malambo",
+      "Puerto Colombia",
+      "Galapa"
+    ],
+    "Santander": [
+      "Bucaramanga",
+      "Floridablanca",
+      "Girón",
+      "Piedecuesta",
+      "Lebrija"
+    ]
+  }
+}

@@ -15,6 +15,7 @@ interface Props {
   onChange: (valor: string) => void;
   opciones: OpcionSelect[];
   activo?: boolean;
+  disabled?: boolean;
 }
 
 // ── Íconos ────────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ function IconoCheck() {
 
 // ── Componente ────────────────────────────────────────────────────────────────
 
-export default function SelectPersonalizado({ id, valor, onChange, opciones, activo }: Props) {
+export default function SelectPersonalizado({ id, valor, onChange, opciones, activo, disabled }: Props) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -92,9 +93,11 @@ export default function SelectPersonalizado({ id, valor, onChange, opciones, act
       <button
         id={id}
         type="button"
-        onClick={() => setAbierto((v) => !v)}
-        className={`w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm text-gray-800 bg-white cursor-pointer
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${bordeClase}`}
+        disabled={disabled}
+        onClick={() => !disabled && setAbierto((v) => !v)}
+        className={`w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm text-gray-800 bg-white
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors
+          ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} ${bordeClase}`}
         aria-haspopup="listbox"
         aria-expanded={abierto}
       >
