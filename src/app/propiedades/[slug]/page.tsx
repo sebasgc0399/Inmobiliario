@@ -461,23 +461,23 @@ export default async function PaginaDetallePropiedad({
             </dl>
           </section>
 
-          {/* Amenidades */}
-          {caracteristicas.amenidades.length > 0 && (
-            <section aria-labelledby="amenidades-titulo">
+          {/* Instalaciones */}
+          {caracteristicas.instalaciones.length > 0 && (
+            <section aria-labelledby="instalaciones-titulo">
               <h2
-                id="amenidades-titulo"
+                id="instalaciones-titulo"
                 className="text-lg font-bold text-gray-900 mb-3"
               >
-                Amenidades
+                Instalaciones
               </h2>
               <div className="flex flex-wrap gap-2">
-                {caracteristicas.amenidades.map((amenidad) => (
+                {caracteristicas.instalaciones.map((instalacion) => (
                   <span
-                    key={amenidad}
+                    key={instalacion}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-medium"
                   >
                     <IconoCheck />
-                    {amenidad}
+                    {instalacion}
                   </span>
                 ))}
               </div>

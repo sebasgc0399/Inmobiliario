@@ -81,8 +81,8 @@ export interface Caracteristicas {
   estrato?: Estrato;
   /** Antigüedad del inmueble en años */
   antiguedad?: number;
-  /** Lista dinámica de amenidades: ['Piscina', 'Gimnasio', 'Ascensor', …] */
-  amenidades: string[];
+  /** Lista dinámica de instalaciones: ['Piscina', 'Gimnasio', 'Ascensor', …] */
+  instalaciones: string[];
   /** Apto para renta corta tipo Airbnb */
   permiteRentaCorta?: boolean;
 }

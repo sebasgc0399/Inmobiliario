@@ -41,13 +41,13 @@ service cloud.firestore {
 
     function caracteristicasValidas(caracteristicas) {
       return caracteristicas is map
-        && caracteristicas.keys().hasAll(['habitaciones', 'banos', 'metrosCuadrados', 'parqueaderos', 'amenidades'])
+        && caracteristicas.keys().hasAll(['habitaciones', 'banos', 'metrosCuadrados', 'parqueaderos', 'instalaciones'])
         && numeroNoNegativo(caracteristicas.habitaciones)
         && numeroNoNegativo(caracteristicas.banos)
         && numeroNoNegativo(caracteristicas.metrosCuadrados)
         && numeroNoNegativo(caracteristicas.parqueaderos)
-        && caracteristicas.amenidades is list
-        && caracteristicas.amenidades.size() <= 60
+        && caracteristicas.instalaciones is list
+        && caracteristicas.instalaciones.size() <= 60
         && (!('metrosConstruidos' in caracteristicas) || numeroNoNegativo(caracteristicas.metrosConstruidos))
         && (!('pisos' in caracteristicas) || numeroNoNegativo(caracteristicas.pisos))
         && (!('piso' in caracteristicas) || numeroNoNegativo(caracteristicas.piso))

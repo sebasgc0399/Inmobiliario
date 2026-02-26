@@ -34,7 +34,7 @@ export const propiedadesMock: Propiedad[] = [
       piso: 8,
       estrato: 6,
       antiguedad: 0,
-      amenidades: ['Piscina', 'Gimnasio', 'Portería 24h', 'Ascensor', 'Terraza común'],
+      instalaciones: ['Piscina', 'Gimnasio', 'Portería 24h', 'Ascensor', 'Terraza común'],
     },
     imagenes: [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
@@ -80,7 +80,7 @@ export const propiedadesMock: Propiedad[] = [
       pisos: 2,
       estrato: 5,
       antiguedad: 15,
-      amenidades: ['Jardín privado', 'Terraza', 'Cuarto de servicio', 'Chimenea'],
+      instalaciones: ['Jardín privado', 'Terraza', 'Cuarto de servicio', 'Chimenea'],
     },
     imagenes: [
       'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80',
@@ -124,7 +124,7 @@ export const propiedadesMock: Propiedad[] = [
       parqueaderos: 4,
       pisos: 2,
       antiguedad: 10,
-      amenidades: ['Piscina', 'Zona BBQ', 'Muelle privado', 'Lago', 'Cancha de fútbol'],
+      instalaciones: ['Piscina', 'Zona BBQ', 'Muelle privado', 'Lago', 'Cancha de fútbol'],
       permiteRentaCorta: true,
     },
     imagenes: [
@@ -170,7 +170,7 @@ export const propiedadesMock: Propiedad[] = [
       piso: 4,
       estrato: 4,
       antiguedad: 1,
-      amenidades: ['Amoblado', 'Cocineta integral', 'Vigilancia', 'Ascensor'],
+      instalaciones: ['Amoblado', 'Cocineta integral', 'Vigilancia', 'Ascensor'],
       permiteRentaCorta: true,
     },
     imagenes: [
@@ -215,7 +215,7 @@ export const propiedadesMock: Propiedad[] = [
       parqueaderos: 2,
       pisos: 2,
       antiguedad: 0,
-      amenidades: ['Piscina privada', 'Vista al mar', 'Jacuzzi', 'Terraza', 'Acceso a playa'],
+      instalaciones: ['Piscina privada', 'Vista al mar', 'Jacuzzi', 'Terraza', 'Acceso a playa'],
       permiteRentaCorta: true,
     },
     imagenes: [
@@ -261,7 +261,7 @@ export const propiedadesMock: Propiedad[] = [
       piso: 3,
       estrato: 5,
       antiguedad: 8,
-      amenidades: ['Portería 24h', 'Parqueadero cubierto', 'Zona BBQ', 'Salón comunal'],
+      instalaciones: ['Portería 24h', 'Parqueadero cubierto', 'Zona BBQ', 'Salón comunal'],
     },
     imagenes: [
       'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
