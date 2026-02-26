@@ -43,7 +43,7 @@ Nota de sincronizacion:
 
 ## 7. Autenticacion y Rutas Protegidas
 * **Proveedor:** Usar Firebase Authentication para el acceso al panel de administracion. Evitar librerias externas de auth de terceros para no duplicar infraestructura.
-* **Seguridad de Rutas:** Proteger rutas del panel `/admin/:path*` usando el Middleware nativo de Next.js en `src/middleware.ts`.
+* **Seguridad de Rutas:** Proteger rutas del panel `/admin/:path*` usando el Proxy nativo de Next.js en `src/proxy.ts`.
 * **Rutas Publicas Admin:** Permitir acceso sin cookie de sesion a `/admin/login` y `/admin/restablecer-contrasena`.
 
 ## 8. Convenciones de Codigo y Nomenclatura

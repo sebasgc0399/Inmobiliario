@@ -13,7 +13,7 @@ function esRutaPublicaAdmin(pathname: string): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (esRutaPublicaAdmin(pathname)) {

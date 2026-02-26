@@ -23,7 +23,7 @@ No incluye tiempos ni estimaciones por fase.
 
 - Framework: Next.js App Router.
 - Dominio y tipado canonico: `src/types/propiedad.ts`.
-- Seguridad de acceso admin: Firebase Auth + custom claim `admin` + `middleware.ts`.
+- Seguridad de acceso admin: Firebase Auth + custom claim `admin` + `proxy.ts`.
 - Rutas admin protegidas: `/admin/*` salvo rutas publicas de login/restablecimiento.
 
 ### 2.2 Estrategia de mutaciones (resuelve contradiccion del roadmap anterior)
@@ -57,7 +57,7 @@ Estado actual (base verificada en repo):
 
 - Auth admin implementado con cookie `__session`.
 - Login admin y restablecimiento de contrasena implementados.
-- `middleware.ts` protegiendo rutas `/admin/*`.
+- `proxy.ts` protegiendo rutas `/admin/*`.
 - Modelo `Propiedad` establecido en `src/types/propiedad.ts`.
 - Reglas Firestore y Storage existentes.
 - Conversor Firestore con `propiedadConverter` ya presente.
@@ -700,4 +700,3 @@ Checklist final de preparacion:
 - [x] Politica de unicidad definida.
 - [x] Riesgos y bloqueantes por fase documentados.
 - [x] Fuera de alcance actualizado.
-

@@ -6,7 +6,7 @@
 ## Estado Actual del Proyecto
 
 ### Completado ✅
-- Auth: Firebase Auth + session cookie httpOnly + middleware de rutas
+- Auth: Firebase Auth + session cookie httpOnly + proxy de rutas
 - Rutas públicas del admin: `/admin/login`, `/admin/restablecer-contrasena`
 - API Routes: `/api/auth/session`, `/api/auth/logout`
 - Firebase client SDK (`src/lib/firebase/client.ts`)

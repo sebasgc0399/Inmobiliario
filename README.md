@@ -6,7 +6,7 @@ Estado actual del proyecto:
 - Listado publico de propiedades con filtros por query params.
 - Render server-first para Home y consulta de datos con Admin SDK.
 - Autenticacion de admin con Firebase Auth + cookie de sesion `__session`.
-- Proteccion de rutas `/admin/*` via middleware.
+- Proteccion de rutas `/admin/*` via proxy.
 - CI en GitHub Actions con jobs de lint y build.
 
 ## 1. Features principales (estado real)
@@ -74,8 +74,8 @@ Conversion `Timestamp <-> Date` centralizada en:
 
 ### 3.4 Auth admin y seguridad de rutas
 
-- Middleware protege `matcher: ['/admin/:path*']`.
-  Evidencia: `src/middleware.ts`.
+- Proxy protege `matcher: ['/admin/:path*']`.
+  Evidencia: `src/proxy.ts`.
 - Rutas publicas admin permitidas sin cookie:
   - `/admin/login`
   - `/admin/restablecer-contrasena`
@@ -125,7 +125,7 @@ Ruta enlazada desde UI pero aun no implementada en `src/app`:
 |  |  |- firebase/
 |  |  |- propiedades/
 |  |- types/
-|  |- middleware.ts
+|  |- proxy.ts
 |- .env.example
 |- .firebaserc
 |- firebase.json
