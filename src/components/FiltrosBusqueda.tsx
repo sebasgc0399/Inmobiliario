@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect, useRef, useTransition } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation';
 import type { ModoNegocio, TipoPropiedad, Moneda } from '@/types';
 import SelectPersonalizado from '@/components/SelectPersonalizado';
 import ubicacionesData from '@/data/ubicaciones.json';
@@ -78,6 +78,27 @@ interface Filtros {
   orden: string;
 }
 
+function esMoneda(valor: string | null): valor is Moneda {
+  return valor === 'COP' || valor === 'USD' || valor === 'EUR';
+}
+
+function serializarDesdeUrl(searchParams: ReadonlyURLSearchParams): Filtros {
+  const monedaDesdeUrl = searchParams.get('moneda');
+
+  return {
+    negocio: searchParams.get('negocio') ?? '',
+    tipo: searchParams.get('tipo') ?? '',
+    departamento: searchParams.get('departamento') ?? '',
+    municipio: searchParams.get('municipio') ?? '',
+    moneda: esMoneda(monedaDesdeUrl) ? monedaDesdeUrl : 'COP',
+    precioMin: searchParams.get('precioMin') ?? '',
+    precioMax: searchParams.get('precioMax') ?? '',
+    habitaciones: searchParams.get('habitaciones') ?? '',
+    estrato: searchParams.get('estrato') ?? '',
+    orden: searchParams.get('orden') ?? '',
+  };
+}
+
 // ── ChipFiltro ────────────────────────────────────────────────────────────────
 
 function ChipFiltro({ etiqueta, onRemover }: { etiqueta: string; onRemover: () => void }) {
@@ -106,18 +127,7 @@ function FiltrosInternos() {
   const [isPending, startTransition] = useTransition();
   const montado = useRef(false);
 
-  const [filtros, setFiltros] = useState<Filtros>({
-    negocio: searchParams.get('negocio') ?? '',
-    tipo: searchParams.get('tipo') ?? '',
-    departamento: searchParams.get('departamento') ?? '',
-    municipio: searchParams.get('municipio') ?? '',
-    moneda: (searchParams.get('moneda') as Moneda) ?? 'COP',
-    precioMin: searchParams.get('precioMin') ?? '',
-    precioMax: searchParams.get('precioMax') ?? '',
-    habitaciones: searchParams.get('habitaciones') ?? '',
-    estrato: searchParams.get('estrato') ?? '',
-    orden: searchParams.get('orden') ?? '',
-  });
+  const [filtros, setFiltros] = useState<Filtros>(() => serializarDesdeUrl(searchParams));
 
   // Municipios disponibles según el departamento seleccionado (valor derivado, no estado)
   const municipiosDisponibles: string[] = filtros.departamento
@@ -150,12 +160,17 @@ function FiltrosInternos() {
       if (filtros.habitaciones) sp.set('habitaciones', filtros.habitaciones);
       if (filtros.estrato) sp.set('estrato', filtros.estrato);
       if (filtros.orden) sp.set('orden', filtros.orden);
+      const siguiente = sp.toString();
+      const actual = searchParams.toString();
+      if (siguiente === actual) {
+        return;
+      }
       startTransition(() => {
-        router.replace(`/?${sp.toString()}`);
+        router.replace(siguiente ? `/?${siguiente}` : '/');
       });
     }, 300);
     return () => clearTimeout(timer);
-  }, [filtros, router]);
+  }, [filtros, router, searchParams, startTransition]);
 
   function cambiar<K extends keyof Filtros>(campo: K, valor: string) {
     setFiltros((prev) => {
@@ -288,6 +303,7 @@ function FiltrosInternos() {
         <div className="flex flex-col">
           <label htmlFor="municipio" className={claseLabel}>Municipio</label>
           <SelectPersonalizado
+            key={filtros.departamento || 'sin-departamento'}
             id="municipio"
             valor={filtros.municipio}
             onChange={(val) => cambiar('municipio', val)}
@@ -302,6 +318,11 @@ function FiltrosInternos() {
             activo={!!filtros.municipio}
             disabled={!filtros.departamento}
           />
+          {!filtros.departamento && (
+            <p className="mt-1 text-xs text-gray-500">
+              Selecciona un departamento para habilitar municipio.
+            </p>
+          )}
         </div>
 
       </div>
@@ -455,10 +476,15 @@ function FiltrosInternos() {
 
 // ── Export: wrapper con Suspense ──────────────────────────────────────────────
 
+function FiltrosConKey() {
+  const searchParams = useSearchParams();
+  return <FiltrosInternos key={searchParams.toString()} />;
+}
+
 export default function FiltrosBusqueda() {
   return (
     <Suspense>
-      <FiltrosInternos />
+      <FiltrosConKey />
     </Suspense>
   );
 }

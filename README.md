@@ -13,7 +13,7 @@ Estado actual del proyecto:
 
 - Home SEO-first con Server Components y render dinamico.
   Evidencia: `src/app/page.tsx`, `src/components/ListadoPropiedadesAsync.tsx`.
-- Filtros por URL: `negocio`, `tipo`, `ciudad`, `moneda`, `precioMin`, `precioMax`.
+- Filtros por URL: `negocio`, `tipo`, `departamento`, `municipio`, `moneda`, `precioMin`, `precioMax`, `habitaciones`, `estrato`, `orden`.
   Evidencia: `src/components/FiltrosBusqueda.tsx`, `src/app/page.tsx`.
 - Lectura de propiedades publicas desde Firestore (`propiedades`) usando converter tipado.
   Evidencia: `src/lib/propiedades/obtenerPropiedadesPublicas.ts`, `src/lib/firebase/propiedadConverter.ts`.

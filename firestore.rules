@@ -30,10 +30,10 @@ service cloud.firestore {
 
     function ubicacionValida(ubicacion) {
       return ubicacion is map
-        && ubicacion.keys().hasAll(['pais', 'departamento', 'ciudad', 'direccion'])
+        && ubicacion.keys().hasAll(['pais', 'departamento', 'municipio', 'direccion'])
         && stringNoVacio(ubicacion.pais)
         && stringNoVacio(ubicacion.departamento)
-        && stringNoVacio(ubicacion.ciudad)
+        && stringNoVacio(ubicacion.municipio)
         && stringNoVacio(ubicacion.direccion)
         && (!('barrio' in ubicacion) || ubicacion.barrio is string)
         && (!('codigoPostal' in ubicacion) || ubicacion.codigoPostal is string);

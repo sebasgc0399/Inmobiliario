@@ -86,6 +86,7 @@ export default function SelectPersonalizado({ id, valor, onChange, opciones, act
 
   const etiquetaActual = opciones.find((o) => o.valor === valor)?.etiqueta ?? opciones[0]?.etiqueta ?? '';
   const bordeClase = activo ? 'border-blue-300 bg-blue-50/40' : 'border-gray-200';
+  const menuAbierto = abierto && !disabled;
 
   return (
     <div ref={ref} className="relative w-full">
@@ -99,14 +100,14 @@ export default function SelectPersonalizado({ id, valor, onChange, opciones, act
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors
           ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} ${bordeClase}`}
         aria-haspopup="listbox"
-        aria-expanded={abierto}
+        aria-expanded={menuAbierto}
       >
         <span className="truncate">{etiquetaActual}</span>
-        <IconoChevron abierto={abierto} />
+        <IconoChevron abierto={menuAbierto} />
       </button>
 
       {/* Dropdown */}
-      {abierto && (
+      {menuAbierto && (
         <ul
           role="listbox"
           className="absolute z-50 mt-1.5 w-full min-w-max rounded-xl border border-gray-100 bg-white shadow-lg py-1 overflow-hidden"

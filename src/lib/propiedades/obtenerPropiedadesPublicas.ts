@@ -14,6 +14,10 @@ function obtenerFuenteDatosPropiedadesPublicas(): FuenteDatosPropiedadesPublicas
   return fuente === 'mock' ? 'mock' : 'firestore';
 }
 
+function normalizarTexto(valor: unknown): string {
+  return typeof valor === 'string' ? valor.trim().toLowerCase() : '';
+}
+
 function aplicarFiltrosOrdenYLimite(
   propiedades: Propiedad[],
   filtros: FiltrosBusquedaServidor,
@@ -29,20 +33,22 @@ function aplicarFiltrosOrdenYLimite(
   }
 
   if (filtros.municipio) {
-    const municipioFiltro = filtros.municipio.toLowerCase();
-    resultado = resultado.filter((propiedad) =>
-      propiedad.ubicacion.municipio.toLowerCase().includes(municipioFiltro),
-    );
+    const municipioFiltro = normalizarTexto(filtros.municipio);
+    resultado = resultado.filter((propiedad) => {
+      const municipioPropiedad = normalizarTexto(propiedad.ubicacion?.municipio);
+      return municipioPropiedad === municipioFiltro;
+    });
   }
 
   // NOTA V2 (+1000 props): departamento, estrato y habitacionesMin deberán migrarse
   // a índices compuestos en Firestore cuando el volumen lo requiera.
 
   if (filtros.departamento) {
-    const deptoFiltro = filtros.departamento.toLowerCase();
-    resultado = resultado.filter((propiedad) =>
-      propiedad.ubicacion.departamento.toLowerCase() === deptoFiltro,
-    );
+    const deptoFiltro = normalizarTexto(filtros.departamento);
+    resultado = resultado.filter((propiedad) => {
+      const departamentoPropiedad = normalizarTexto(propiedad.ubicacion?.departamento);
+      return departamentoPropiedad === deptoFiltro;
+    });
   }
 
   if (typeof filtros.precioMin === 'number' || typeof filtros.precioMax === 'number') {

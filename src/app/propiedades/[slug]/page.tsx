@@ -65,20 +65,20 @@ export async function generateMetadata({
 // ── Propiedades relacionadas (async Server Component interno) ─────────────────
 
 interface PropiedadesRelacionadasProps {
-  ciudadActual: string;
+  municipioActual: string;
   tipoActual: TipoPropiedad;
   slugExcluir: string;
   moneda: Moneda;
 }
 
 async function PropiedadesRelacionadas({
-  ciudadActual,
+  municipioActual,
   tipoActual,
   slugExcluir,
   moneda,
 }: PropiedadesRelacionadasProps) {
   // Intentar por municipio primero
-  let relacionadas = await obtenerPropiedadesPublicas({ moneda, municipio: ciudadActual });
+  let relacionadas = await obtenerPropiedadesPublicas({ moneda, municipio: municipioActual });
   relacionadas = relacionadas.filter((p) => p.slug !== slugExcluir);
 
   // Si no hay resultados, intentar por tipo de propiedad
@@ -95,7 +95,7 @@ async function PropiedadesRelacionadas({
   return (
     <section className="mt-16" aria-labelledby="relacionadas-titulo">
       <h2 id="relacionadas-titulo" className="text-xl font-bold text-gray-900 mb-6">
-        Propiedades similares en {ciudadActual}
+        Propiedades similares en {municipioActual}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {primeras.map((p) => (
@@ -537,7 +537,7 @@ export default async function PaginaDetallePropiedad({
       {/* Propiedades relacionadas */}
       <Suspense fallback={null}>
         <PropiedadesRelacionadas
-          ciudadActual={propiedad.ubicacion.municipio}
+          municipioActual={propiedad.ubicacion.municipio}
           tipoActual={propiedad.tipo}
           slugExcluir={propiedad.slug}
           moneda={moneda}
