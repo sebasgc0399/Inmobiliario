@@ -192,12 +192,14 @@ Nota operativa:
 | `FIREBASE_CLIENT_EMAIL` | Privada | Credenciales Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
 | `FIREBASE_PRIVATE_KEY` | Privada | Llave privada Admin SDK | `src/lib/firebase/admin.ts`, `scripts/asignar-claim-admin.mjs` |
 | `FIREBASE_STORAGE_BUCKET` | Privada | Bucket Admin SDK | `src/lib/firebase/admin.ts` |
+| `FUENTE_DATOS_PROPIEDADES_PUBLICAS` | Servidor | Fuente de datos para Home publica (`firestore` o `mock`) | `src/lib/propiedades/obtenerPropiedadesPublicas.ts` |
 | `CI_NEXT_PUBLIC_ENV` | CI secret | Contenido para generar `.env.local` en pipeline CI | `.github/workflows/ci.yml` |
 
 Plantilla base: `.env.example`.
 
 Importante:
 - `CI_NEXT_PUBLIC_ENV` es un secreto de CI para build, no una variable runtime obligatoria del server en produccion.
+- `FUENTE_DATOS_PROPIEDADES_PUBLICAS` usa `firestore` por defecto. Para pruebas locales del listado publico puedes usar `FUENTE_DATOS_PROPIEDADES_PUBLICAS=mock`.
 
 ## 9. Firebase
 

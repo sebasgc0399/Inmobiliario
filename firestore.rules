@@ -124,11 +124,50 @@ service cloud.firestore {
         && (!('tags' in data) || (data.tags is list && data.tags.size() <= 40));
     }
 
+    function leadValido(data) {
+      return data is map
+        && data.keys().hasAll([
+          'slugPropiedad',
+          'codigoPropiedad',
+          'nombre',
+          'telefono',
+          'mensaje',
+          'origen',
+          'creadoEn',
+          'estado'
+        ])
+        && data.keys().hasOnly([
+          'slugPropiedad',
+          'codigoPropiedad',
+          'nombre',
+          'telefono',
+          'mensaje',
+          'origen',
+          'creadoEn',
+          'estado'
+        ])
+        && stringNoVacio(data.slugPropiedad)
+        && stringNoVacio(data.codigoPropiedad)
+        && stringNoVacio(data.nombre) && data.nombre.size() <= 120
+        && stringNoVacio(data.telefono) && data.telefono.size() <= 30
+        && stringNoVacio(data.mensaje) && data.mensaje.size() <= 1000
+        && data.origen in ['formulario_detalle', 'formulario_contacto']
+        && data.creadoEn is timestamp
+        && data.estado == 'nuevo';
+    }
+
     match /propiedades/{propiedadId} {
       allow get, list: if isAdmin() || resource.data.estadoPublicacion == 'activo';
       allow create: if isAdmin() && propiedadValida(request.resource.data);
       allow update: if isAdmin() && propiedadValida(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    match /leads/{leadId} {
+      // El Admin SDK (usado en el Server Action guardarLead) ignora estas reglas,
+      // pero se definen como defensa en profundidad contra escrituras directas del cliente
+      allow create: if leadValido(request.resource.data);
+      allow read, update, delete: if isAdmin();
     }
 
     match /{documento=**} {

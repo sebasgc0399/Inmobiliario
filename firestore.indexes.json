@@ -71,6 +71,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "propiedades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "slug",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estadoPublicacion",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
