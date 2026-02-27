@@ -105,6 +105,12 @@ export default function GaleriaImagenes({
   const [archivos, setArchivos] = useState<ArchivoLocal[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Ref sincronizada con el estado para evitar closures stale en callbacks asíncronos de Firebase
+  const archivosRef = useRef<ArchivoLocal[]>([]);
+  useEffect(() => {
+    archivosRef.current = archivos;
+  }, [archivos]);
+
   // Ref para rastrear la portada asignada sin depender del closure de la prop.
   // Necesario porque múltiples uploads en paralelo completan antes de que React
   // re-renderice, por lo que todos leerían imagenPrincipal = '' desde el closure.
@@ -187,27 +193,23 @@ export default function GaleriaImagenes({
           },
           (error) => {
             console.error('[GaleriaImagenes] Error al subir:', error);
-            setArchivos((prev) => {
-              const actualizados = prev.map((a) =>
-                a.id === entrada.id ? { ...a, error: 'Error al subir. Reintenta.' } : a,
-              );
-              notificarCambios(actualizados, imagenPrincipal);
-              return actualizados;
-            });
+            const actualizados = archivosRef.current.map((a) =>
+              a.id === entrada.id ? { ...a, error: 'Error al subir. Reintenta.' } : a,
+            );
+            setArchivos(actualizados);
+            notificarCambios(actualizados, imagenPrincipal);
           },
           async () => {
             try {
               const url = await getDownloadURL(uploadTask.snapshot.ref);
-              setArchivos((prev) => {
-                const actualizados = prev.map((a) =>
-                  a.id === entrada.id ? { ...a, url, progreso: 100 } : a,
-                );
-                // Si no hay portada aún, la primera imagen subida se convierte en portada.
-                const portadaActual = portadaInternaRef.current || url;
-                portadaInternaRef.current = portadaActual;
-                notificarCambios(actualizados, portadaActual);
-                return actualizados;
-              });
+              const actualizados = archivosRef.current.map((a) =>
+                a.id === entrada.id ? { ...a, url, progreso: 100 } : a,
+              );
+              // Si no hay portada aún, la primera imagen subida se convierte en portada.
+              const portadaActual = portadaInternaRef.current || url;
+              portadaInternaRef.current = portadaActual;
+              setArchivos(actualizados);
+              notificarCambios(actualizados, portadaActual);
             } catch (err) {
               console.error('[GaleriaImagenes] Error al obtener URL:', err);
             }
@@ -230,19 +232,17 @@ export default function GaleriaImagenes({
 
   // Eliminar imagen nueva (aún no guardada en Firestore): solo quitar del estado local.
   function eliminarArchivoNuevo(id: string) {
-    setArchivos((prev) => {
-      const filtrados = prev.filter((a) => a.id !== id);
-      const entradaEliminada = prev.find((a) => a.id === id);
+    const filtrados = archivos.filter((a) => a.id !== id);
+    const entradaEliminada = archivos.find((a) => a.id === id);
 
-      let nuevaPortada = imagenPrincipal;
-      if (entradaEliminada?.url === imagenPrincipal) {
-        const primerSubido = filtrados.find((a) => a.url);
-        nuevaPortada = primerSubido?.url ?? '';
-      }
+    let nuevaPortada = imagenPrincipal;
+    if (entradaEliminada?.url === imagenPrincipal) {
+      const primerSubido = filtrados.find((a) => a.url);
+      nuevaPortada = primerSubido?.url ?? '';
+    }
 
-      notificarCambios(filtrados, nuevaPortada);
-      return filtrados;
-    });
+    setArchivos(filtrados);
+    notificarCambios(filtrados, nuevaPortada);
   }
 
   // Eliminar imagen existente: confirmación → Server Action → actualización del estado.
@@ -272,14 +272,12 @@ export default function GaleriaImagenes({
     }
 
     // Éxito: remover del estado y actualizar portada si era la principal
-    setArchivos((prev) => {
-      const filtrados = prev.filter((a) => a.id !== id);
-      const nuevaPortada = esPrincipal
-        ? (filtrados.find((a) => a.url)?.url ?? '')
-        : imagenPrincipal;
-      notificarCambios(filtrados, nuevaPortada);
-      return filtrados;
-    });
+    const filtrados = archivos.filter((a) => a.id !== id);
+    const nuevaPortada = esPrincipal
+      ? (filtrados.find((a) => a.url)?.url ?? '')
+      : imagenPrincipal;
+    setArchivos(filtrados);
+    notificarCambios(filtrados, nuevaPortada);
   }
 
   const limiteAlcanzado = archivos.length >= MAX_IMAGENES;
