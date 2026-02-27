@@ -1,4 +1,5 @@
 import { obtenerAdminAuth } from '@/lib/firebase/admin';
+import ShellAdmin from '@/components/admin/ShellAdmin';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -21,6 +22,8 @@ export default async function LayoutPrivadoAdmin({
     redirect('/admin/login');
   }
 
+  let email = 'admin';
+
   try {
     const tokenDecodificado = await obtenerAdminAuth().verifySessionCookie(
       sessionCookie,
@@ -30,9 +33,11 @@ export default async function LayoutPrivadoAdmin({
     if (tokenDecodificado.admin !== true) {
       redirect('/admin/login');
     }
+
+    email = tokenDecodificado.email ?? 'admin';
   } catch {
     redirect('/admin/login');
   }
 
-  return <>{children}</>;
+  return <ShellAdmin email={email}>{children}</ShellAdmin>;
 }
