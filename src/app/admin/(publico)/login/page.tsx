@@ -3,7 +3,7 @@
 import { auth } from '@/lib/firebase/client';
 import { sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface FormularioLoginAdmin {
@@ -50,7 +50,7 @@ function obtenerMensajeErrorLogin(error: unknown): string {
   }
 }
 
-export default function LoginAdminPage() {
+function FormularioLoginAdmin() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -144,8 +144,7 @@ export default function LoginAdminPage() {
   });
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold text-gray-900">Acceso Administrador</h1>
         <p className="mt-2 text-sm text-gray-600">
           Inicia sesión para acceder al panel de administración inmobiliaria.
@@ -233,7 +232,28 @@ export default function LoginAdminPage() {
             </p>
           ) : null}
         </form>
-      </section>
+    </section>
+  );
+}
+
+export default function LoginAdminPage() {
+  return (
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
+      <Suspense
+        fallback={
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+            <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-100" />
+            <div className="mt-6 space-y-4">
+              <div className="h-10 animate-pulse rounded-lg bg-gray-100" />
+              <div className="h-10 animate-pulse rounded-lg bg-gray-100" />
+              <div className="h-10 animate-pulse rounded-lg bg-blue-100" />
+            </div>
+          </div>
+        }
+      >
+        <FormularioLoginAdmin />
+      </Suspense>
     </main>
   );
 }
