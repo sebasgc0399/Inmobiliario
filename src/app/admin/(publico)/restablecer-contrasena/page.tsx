@@ -4,7 +4,7 @@ import { auth } from '@/lib/firebase/client';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function obtenerMensajeErrorConfirmacion(error: unknown): string {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function RestablecerContrasenaPage() {
+function FormularioRestablecerContrasena() {
   const searchParams = useSearchParams();
 
   const [estadoPagina, setEstadoPagina] = useState<EstadoPagina>('verificando');
@@ -153,8 +153,7 @@ export default function RestablecerContrasenaPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
 
         {/* Estado: verificando */}
         {estadoPagina === 'verificando' && (
@@ -321,7 +320,27 @@ export default function RestablecerContrasenaPage() {
           </>
         )}
 
-      </section>
+    </section>
+  );
+}
+
+export default function RestablecerContrasenaPage() {
+  return (
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
+      <Suspense
+        fallback={
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="h-7 w-48 animate-pulse rounded bg-gray-200" />
+            <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-100" />
+            <div className="mt-4 space-y-2">
+              <div className="h-9 w-full animate-pulse rounded-lg bg-gray-100" />
+              <div className="h-9 w-full animate-pulse rounded-lg bg-gray-100" />
+            </div>
+          </div>
+        }
+      >
+        <FormularioRestablecerContrasena />
+      </Suspense>
     </main>
   );
 }
