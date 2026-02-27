@@ -5,6 +5,7 @@ import { useFormContext, useWatch, Controller } from 'react-hook-form';
 
 import SelectPersonalizado from '@/components/SelectPersonalizado';
 import { generarSlug } from '@/lib/utils/generarSlug';
+import { verificarSlugUnico } from '@/actions/propiedades/verificarSlugUnico';
 import type { CamposFormulario } from './tipos';
 
 // ── Opciones de los selects ────────────────────────────────────────────────
@@ -32,6 +33,18 @@ const OPCIONES_CONDICION = [
   { valor: 'sobre_planos', etiqueta: 'Sobre Planos' },
 ];
 
+// ── Tipos internos ─────────────────────────────────────────────────────────
+
+type EstadoSlug = 'inactivo' | 'verificando' | 'disponible' | 'ocupado';
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+interface Props {
+  modoEdicion?: boolean;
+  slugOriginal?: string;    // Slug actual de la propiedad (para ignorar en la validación)
+  propiedadId?: string;     // ID de la propiedad (para identificarla en slugUnicos)
+}
+
 // ── Estilos reutilizables ──────────────────────────────────────────────────
 
 const claseInput =
@@ -41,7 +54,11 @@ const claseError = 'mt-1 text-sm text-red-600';
 
 // ── Componente ────────────────────────────────────────────────────────────
 
-export default function SeccionBasica() {
+export default function SeccionBasica({
+  modoEdicion = false,
+  slugOriginal,
+  propiedadId,
+}: Props) {
   const {
     register,
     control,
@@ -52,18 +69,55 @@ export default function SeccionBasica() {
 
   // Estado UI — solo para el input de tag en progreso (no es un campo del form)
   const [inputTag, setInputTag] = useState('');
-  // Controla si el slug fue editado manualmente (para no sobreescribir la edición del admin)
-  const [slugEditadoManualmente, setSlugEditadoManualmente] = useState(false);
+
+  // En modo edición el slug ya tiene un valor asignado y no debe auto-regenerarse
+  // desde el título (cambiar el slug de una propiedad publicada rompería las URLs).
+  const [slugEditadoManualmente, setSlugEditadoManualmente] = useState(modoEdicion);
+
+  // Estado de la validación de unicidad del slug (solo activa en modo edición)
+  const [estadoSlug, setEstadoSlug] = useState<EstadoSlug>('inactivo');
 
   const titulo = useWatch({ control, name: 'titulo' });
+  const slugValue = useWatch({ control, name: 'slug' });
   const tags = watch('tags');
 
-  // Auto-generar slug desde el título (si no fue editado manualmente)
+  // Auto-generar slug desde el título (solo en modo creación y si no fue editado manualmente)
   useEffect(() => {
     if (!slugEditadoManualmente && titulo) {
       setValue('slug', generarSlug(titulo), { shouldValidate: false });
     }
   }, [titulo, slugEditadoManualmente, setValue]);
+
+  // Validación de unicidad del slug con debounce 500ms.
+  // Solo activa cuando hay slugOriginal/propiedadId (modo edición) o cuando el slug
+  // ha sido escrito manualmente en modo creación.
+  useEffect(() => {
+    // No validar si el slug es el mismo que el original (no cambió nada)
+    if (!slugValue || slugValue === slugOriginal) {
+      setEstadoSlug('inactivo');
+      return;
+    }
+
+    // No activar el debounce si el slug aún se está auto-generando en creación
+    // y el usuario no ha interactuado con el campo
+    if (!modoEdicion && !slugEditadoManualmente) {
+      setEstadoSlug('inactivo');
+      return;
+    }
+
+    setEstadoSlug('verificando');
+
+    const timer = setTimeout(async () => {
+      try {
+        const disponible = await verificarSlugUnico(slugValue, propiedadId);
+        setEstadoSlug(disponible ? 'disponible' : 'ocupado');
+      } catch {
+        setEstadoSlug('inactivo');
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [slugValue, slugOriginal, propiedadId, modoEdicion, slugEditadoManualmente]);
 
   function agregarTag() {
     const tag = inputTag.trim();
@@ -107,7 +161,9 @@ export default function SeccionBasica() {
           <label htmlFor="slug" className="mb-1 block text-sm font-medium text-gray-700">
             Slug URL <span aria-hidden="true" className="text-red-500">*</span>
             <span className="ml-2 text-xs font-normal text-gray-400">
-              (auto-generado desde el título — editable)
+              {modoEdicion
+                ? '(editable — se validará unicidad al cambiar)'
+                : '(auto-generado desde el título — editable)'}
             </span>
           </label>
           <input
@@ -125,6 +181,24 @@ export default function SeccionBasica() {
             })}
           />
           {errors.slug && <p className={claseError}>{errors.slug.message}</p>}
+
+          {/* Indicador de unicidad */}
+          {estadoSlug !== 'inactivo' && (
+            <p
+              className={`mt-1 text-xs font-medium ${
+                estadoSlug === 'verificando'
+                  ? 'text-gray-500'
+                  : estadoSlug === 'disponible'
+                  ? 'text-emerald-600'
+                  : 'text-red-600'
+              }`}
+              aria-live="polite"
+            >
+              {estadoSlug === 'verificando' && 'Verificando disponibilidad…'}
+              {estadoSlug === 'disponible' && '✓ Slug disponible'}
+              {estadoSlug === 'ocupado' && '✗ Este slug ya está en uso por otra propiedad'}
+            </p>
+          )}
         </div>
 
         {/* Código de Propiedad */}

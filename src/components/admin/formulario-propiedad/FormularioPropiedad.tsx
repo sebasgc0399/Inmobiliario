@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import { crearPropiedad } from '@/actions/propiedades/crearPropiedad';
 import type { DatosCrearPropiedad } from '@/actions/propiedades/crearPropiedad';
+import { actualizarPropiedad } from '@/actions/propiedades/actualizarPropiedad';
+import type { DatosActualizarPropiedad } from '@/actions/propiedades/actualizarPropiedad';
 import type { Estrato } from '@/types';
 
 import SeccionBasica from './SeccionBasica';
@@ -22,6 +24,18 @@ interface EstadoToast {
   visible: boolean;
   tipo: 'exito' | 'error';
   mensaje: string;
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+interface Props {
+  modo?: 'crear' | 'editar';
+  propiedadId?: string;
+  slugOriginal?: string;
+  codigoOriginal?: string;
+  valoresIniciales?: CamposFormulario;
+  imagenesIniciales?: string[];
+  imagenPrincipalInicial?: string;
 }
 
 // ── Valores iniciales del formulario ──────────────────────────────────────
@@ -72,7 +86,7 @@ const VALORES_INICIALES: CamposFormulario = {
   seo: { metaTitle: '', metaDescription: '', keywords: [] },
 };
 
-// ── Helper: transformar CamposFormulario → DatosCrearPropiedad ─────────────
+// ── Helper: transformar CamposFormulario → datos para la Server Action ─────
 // Convierte strings opcionales a number | undefined y excluye campos vacíos.
 
 function parsearNumero(val: string): number | undefined {
@@ -91,7 +105,7 @@ function transformarFormADatos(
   campos: CamposFormulario,
   imagenes: string[],
   imagenPrincipal: string,
-): DatosCrearPropiedad {
+): Omit<DatosCrearPropiedad, never> {
   const datos: DatosCrearPropiedad = {
     slug: campos.slug,
     codigoPropiedad: campos.codigoPropiedad,
@@ -145,8 +159,6 @@ function transformarFormADatos(
         piso: parsearEntero(campos.caracteristicas.piso),
       }),
       ...(campos.caracteristicas.estrato && {
-        // parseInt('3') devuelve number, el cast a Estrato es necesario porque
-        // TypeScript no puede inferir que el resultado es el literal 1|2|3|4|5|6.
         estrato: parseInt(campos.caracteristicas.estrato, 10) as Estrato,
       }),
       ...(campos.caracteristicas.antiguedad && {
@@ -158,7 +170,6 @@ function transformarFormADatos(
     imagenes,
     ...(imagenPrincipal && { imagenPrincipal }),
 
-    // Campos opcionales de nivel superior
     ...(campos.tourVirtual && { tourVirtual: campos.tourVirtual }),
     ...(campos.videoUrl && { videoUrl: campos.videoUrl }),
     ...(campos.tags.length > 0 && { tags: campos.tags }),
@@ -192,13 +203,23 @@ function transformarFormADatos(
 
 // ── Componente principal ───────────────────────────────────────────────────
 
-export default function FormularioPropiedad() {
+export default function FormularioPropiedad({
+  modo = 'crear',
+  propiedadId,
+  slugOriginal,
+  codigoOriginal,
+  valoresIniciales,
+  imagenesIniciales = [],
+  imagenPrincipalInicial = '',
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const esEdicion = modo === 'editar';
+
   // Estado fuera de RHF — solo para imágenes y toast
-  const [imagenes, setImagenes] = useState<string[]>([]);
-  const [imagenPrincipal, setImagenPrincipal] = useState<string>('');
+  const [imagenes, setImagenes] = useState<string[]>(imagenesIniciales);
+  const [imagenPrincipal, setImagenPrincipal] = useState<string>(imagenPrincipalInicial);
   const [toast, setToast] = useState<EstadoToast>({
     visible: false,
     tipo: 'exito',
@@ -207,7 +228,7 @@ export default function FormularioPropiedad() {
 
   const methods = useForm<CamposFormulario>({
     mode: 'onBlur',
-    defaultValues: VALORES_INICIALES,
+    defaultValues: valoresIniciales ?? VALORES_INICIALES,
   });
 
   const codigoPropiedad = methods.watch('codigoPropiedad');
@@ -220,14 +241,25 @@ export default function FormularioPropiedad() {
 
   // Handler del submit del formulario
   async function onSubmit(campos: CamposFormulario) {
-    const datosTransformados = transformarFormADatos(campos, imagenes, imagenPrincipal);
+    const datosBase = transformarFormADatos(campos, imagenes, imagenPrincipal);
 
     startTransition(async () => {
-      const resultado = await crearPropiedad(datosTransformados);
+      let resultado;
+
+      if (esEdicion && propiedadId && slugOriginal !== undefined && codigoOriginal !== undefined) {
+        const datosActualizar: DatosActualizarPropiedad = {
+          ...datosBase,
+          id: propiedadId,
+          slugAnterior: slugOriginal,
+          codigoAnterior: codigoOriginal,
+        };
+        resultado = await actualizarPropiedad(datosActualizar);
+      } else {
+        resultado = await crearPropiedad(datosBase);
+      }
 
       if (!resultado.ok) {
         setToast({ visible: true, tipo: 'error', mensaje: resultado.error });
-        // Auto-ocultar el toast de error después de 5s
         setTimeout(() => setToast((t) => ({ ...t, visible: false })), 5000);
         return;
       }
@@ -235,10 +267,11 @@ export default function FormularioPropiedad() {
       setToast({
         visible: true,
         tipo: 'exito',
-        mensaje: 'Propiedad guardada como borrador correctamente.',
+        mensaje: esEdicion
+          ? 'Cambios guardados correctamente.'
+          : 'Propiedad guardada como borrador correctamente.',
       });
 
-      // Redirigir tras 1.5s para que el admin vea el toast de éxito
       setTimeout(() => {
         router.push('/admin/propiedades');
       }, 1500);
@@ -253,9 +286,13 @@ export default function FormularioPropiedad() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Nueva Propiedad</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {esEdicion ? 'Editar Propiedad' : 'Nueva Propiedad'}
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Se guardará como borrador. Puedes publicarla desde el listado.
+            {esEdicion
+              ? 'Los cambios se guardarán manteniendo el estado actual de publicación.'
+              : 'Se guardará como borrador. Puedes publicarla desde el listado.'}
           </p>
         </div>
 
@@ -265,7 +302,11 @@ export default function FormularioPropiedad() {
           className="space-y-8"
         >
           {/* Secciones del formulario */}
-          <SeccionBasica />
+          <SeccionBasica
+            modoEdicion={esEdicion}
+            slugOriginal={slugOriginal}
+            propiedadId={propiedadId}
+          />
           <SeccionUbicacion />
           <SeccionCaracteristicas />
           <SeccionPrecio />
@@ -276,12 +317,15 @@ export default function FormularioPropiedad() {
             <h2 className="mb-4 text-lg font-semibold text-gray-900">Galería de Imágenes</h2>
             <GaleriaImagenes
               codigoPropiedad={codigoPropiedad || undefined}
+              idPropiedad={propiedadId}
               imagenPrincipal={imagenPrincipal}
               onCambio={manejarCambioGaleria}
+              imagenesIniciales={imagenesIniciales}
+              slugPropiedad={slugOriginal}
             />
           </section>
 
-          {/* Botón de guardar */}
+          {/* Botones */}
           <div className="flex items-center justify-end gap-4 pt-4">
             <button
               type="button"
@@ -294,7 +338,7 @@ export default function FormularioPropiedad() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
               {isSubmitting ? (
                 <>
@@ -320,6 +364,8 @@ export default function FormularioPropiedad() {
                   </svg>
                   Guardando...
                 </>
+              ) : esEdicion ? (
+                'Guardar cambios'
               ) : (
                 'Guardar como borrador'
               )}

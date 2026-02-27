@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 import { storage } from '@/lib/firebase/client';
+import { eliminarImagenPropiedad } from '@/actions/propiedades/eliminarImagenPropiedad';
 
 // ── Constantes ────────────────────────────────────────────────────────────
 
@@ -15,17 +16,22 @@ const CALIDAD_JPEG = 0.82;
 
 interface ArchivoLocal {
   id: string;          // UUID local para key de React
-  previewUrl: string;  // blob: URL para el <img> de preview
-  progreso: number;    // 0–100
+  previewUrl: string;  // blob: URL para preview (o URL de Storage si es existente)
+  progreso: number;    // 0–100 (100 para las existentes)
   url?: string;        // URL de Firebase Storage (undefined hasta que termina)
-  error?: string;      // Mensaje de error si falló la subida
+  error?: string;      // Mensaje de error si falló la subida o eliminación
   nombre: string;      // Nombre de archivo sanitizado
+  esExistente: boolean; // true si fue cargada desde Firestore (ya estaba guardada)
+  eliminando?: boolean; // true mientras se espera la confirmación del servidor
 }
 
 interface Props {
   codigoPropiedad: string | undefined;
+  idPropiedad?: string;        // Solo en modo edición — para la Server Action de eliminación
   imagenPrincipal: string;
   onCambio: (imagenes: string[], imagenPrincipal: string) => void;
+  imagenesIniciales?: string[]; // URLs ya guardadas en Firestore (modo edición)
+  slugPropiedad?: string;       // Para revalidar la ruta pública tras eliminación
 }
 
 // ── Helper: comprimir imagen con Canvas API ───────────────────────────────
@@ -90,8 +96,11 @@ function sanitizarNombre(nombre: string): string {
 
 export default function GaleriaImagenes({
   codigoPropiedad,
+  idPropiedad,
   imagenPrincipal,
   onCambio,
+  imagenesIniciales,
+  slugPropiedad,
 }: Props) {
   const [archivos, setArchivos] = useState<ArchivoLocal[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +109,23 @@ export default function GaleriaImagenes({
   // Necesario porque múltiples uploads en paralelo completan antes de que React
   // re-renderice, por lo que todos leerían imagenPrincipal = '' desde el closure.
   const portadaInternaRef = useRef(imagenPrincipal);
+
+  // Inicializar con imágenes existentes (solo en el primer render).
+  // No se llama onCambio aquí porque el padre ya conoce estos valores.
+  useEffect(() => {
+    if (imagenesIniciales && imagenesIniciales.length > 0) {
+      const existentes: ArchivoLocal[] = imagenesIniciales.map((url, index) => ({
+        id: `existente-${index}-${url.slice(-12)}`,
+        previewUrl: url,  // La URL de Storage sirve directamente como preview
+        progreso: 100,
+        url,
+        nombre: url.split('/').pop()?.split('?')[0] ?? 'imagen',
+        esExistente: true,
+      }));
+      setArchivos(existentes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo en mount
 
   // Sincronizar cuando el padre actualiza la portada (ej: usuario hace clic en "Portada")
   useEffect(() => {
@@ -131,6 +157,7 @@ export default function GaleriaImagenes({
       previewUrl: URL.createObjectURL(file),
       progreso: 0,
       nombre: sanitizarNombre(file.name),
+      esExistente: false,
     }));
 
     setArchivos((prev) => [...prev, ...nuevasEntradas]);
@@ -176,8 +203,6 @@ export default function GaleriaImagenes({
                   a.id === entrada.id ? { ...a, url, progreso: 100 } : a,
                 );
                 // Si no hay portada aún, la primera imagen subida se convierte en portada.
-                // Usamos el ref (no la prop del closure) para que uploads paralelos
-                // que completan antes del re-render no sobreescriban la portada ya asignada.
                 const portadaActual = portadaInternaRef.current || url;
                 portadaInternaRef.current = portadaActual;
                 notificarCambios(actualizados, portadaActual);
@@ -203,18 +228,55 @@ export default function GaleriaImagenes({
     notificarCambios(archivos, url);
   }
 
-  function eliminarArchivo(id: string) {
+  // Eliminar imagen nueva (aún no guardada en Firestore): solo quitar del estado local.
+  function eliminarArchivoNuevo(id: string) {
     setArchivos((prev) => {
       const filtrados = prev.filter((a) => a.id !== id);
       const entradaEliminada = prev.find((a) => a.id === id);
 
       let nuevaPortada = imagenPrincipal;
       if (entradaEliminada?.url === imagenPrincipal) {
-        // Asignar la primera imagen subida disponible como nueva portada
         const primerSubido = filtrados.find((a) => a.url);
         nuevaPortada = primerSubido?.url ?? '';
       }
 
+      notificarCambios(filtrados, nuevaPortada);
+      return filtrados;
+    });
+  }
+
+  // Eliminar imagen existente: confirmación → Server Action → actualización del estado.
+  async function eliminarArchivoExistente(id: string, url: string) {
+    if (!idPropiedad) {
+      console.error('[GaleriaImagenes] idPropiedad requerido para eliminar imágenes existentes.');
+      return;
+    }
+
+    if (!window.confirm('¿Eliminar esta imagen? Esta acción es irreversible.')) return;
+
+    const esPrincipal = url === imagenPrincipal;
+
+    // Marcar como "eliminando" para bloquear el botón y mostrar spinner
+    setArchivos((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, eliminando: true, error: undefined } : a)),
+    );
+
+    const resultado = await eliminarImagenPropiedad(idPropiedad, url, esPrincipal, slugPropiedad);
+
+    if (!resultado.ok) {
+      // Quitar el estado de carga y mostrar el error inline
+      setArchivos((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, eliminando: false, error: resultado.error } : a)),
+      );
+      return;
+    }
+
+    // Éxito: remover del estado y actualizar portada si era la principal
+    setArchivos((prev) => {
+      const filtrados = prev.filter((a) => a.id !== id);
+      const nuevaPortada = esPrincipal
+        ? (filtrados.find((a) => a.url)?.url ?? '')
+        : imagenPrincipal;
       notificarCambios(filtrados, nuevaPortada);
       return filtrados;
     });
@@ -296,8 +358,9 @@ export default function GaleriaImagenes({
                 }`}
             >
               {/*
-               * Se usa <img> nativo intencionalmente porque las previewUrl son
-               * blob: URLs locales que Next.js <Image> no puede optimizar.
+               * Se usa <img> nativo intencionalmente:
+               * - Las previewUrl de archivos nuevos son blob: URLs que Next.js <Image> no puede optimizar.
+               * - Las URLs de Storage existentes también se muestran con <img> para consistencia.
                */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -306,7 +369,7 @@ export default function GaleriaImagenes({
                 className="h-full w-full object-cover"
               />
 
-              {/* Overlay de progreso */}
+              {/* Overlay de progreso (solo para imágenes nuevas en subida) */}
               {!archivo.url && !archivo.error && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50">
                   <div className="w-3/4 overflow-hidden rounded-full bg-white/20">
@@ -321,8 +384,34 @@ export default function GaleriaImagenes({
                 </div>
               )}
 
+              {/* Overlay de eliminación en progreso */}
+              {archivo.eliminando && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <svg
+                    className="h-6 w-6 animate-spin text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-label="Eliminando imagen…"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                </div>
+              )}
+
               {/* Overlay de error */}
-              {archivo.error && (
+              {archivo.error && !archivo.eliminando && (
                 <div className="absolute inset-0 flex items-center justify-center bg-red-900/70 p-2">
                   <p className="text-center text-xs font-medium text-white">{archivo.error}</p>
                 </div>
@@ -335,29 +424,35 @@ export default function GaleriaImagenes({
                 </span>
               )}
 
-              {/* Acciones en hover */}
-              <div className="absolute inset-0 flex flex-col items-end justify-start gap-1 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                {/* Botón "Marcar como portada" — solo si la imagen ya tiene URL y no es la portada actual */}
-                {archivo.url && archivo.url !== imagenPrincipal && (
+              {/* Acciones en hover — ocultas mientras se elimina */}
+              {!archivo.eliminando && (
+                <div className="absolute inset-0 flex flex-col items-end justify-start gap-1 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  {/* Botón "Marcar como portada" — solo si tiene URL y no es la portada actual */}
+                  {archivo.url && archivo.url !== imagenPrincipal && (
+                    <button
+                      type="button"
+                      onClick={() => marcarComoPortada(archivo.url!)}
+                      className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium text-gray-700 shadow hover:bg-white"
+                    >
+                      Portada
+                    </button>
+                  )}
+
+                  {/* Botón eliminar */}
                   <button
                     type="button"
-                    onClick={() => marcarComoPortada(archivo.url!)}
-                    className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium text-gray-700 shadow hover:bg-white"
+                    onClick={() =>
+                      archivo.esExistente && archivo.url
+                        ? eliminarArchivoExistente(archivo.id, archivo.url)
+                        : eliminarArchivoNuevo(archivo.id)
+                    }
+                    className="rounded-lg bg-red-500/90 px-2 py-1 text-xs font-semibold text-white shadow hover:bg-red-600"
+                    aria-label="Eliminar imagen"
                   >
-                    Portada
+                    ×
                   </button>
-                )}
-
-                {/* Botón eliminar */}
-                <button
-                  type="button"
-                  onClick={() => eliminarArchivo(archivo.id)}
-                  className="rounded-lg bg-red-500/90 px-2 py-1 text-xs font-semibold text-white shadow hover:bg-red-600"
-                  aria-label="Eliminar imagen"
-                >
-                  ×
-                </button>
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
