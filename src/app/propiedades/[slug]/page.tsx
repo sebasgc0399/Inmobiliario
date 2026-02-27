@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 
 import { obtenerPropiedadPorSlug } from '@/lib/propiedades/obtenerPropiedadPorSlug';
 import { obtenerPropiedadesPublicas } from '@/lib/propiedades/obtenerPropiedadesPublicas';
-import { guardarLead } from '@/lib/leads/guardarLead';
+import { crearLead } from '@/actions/leads/crearLead';
 import { convertirMoneda, formatearPrecio } from '@/lib/currency';
 
 import GaleriaPropiedad from '@/components/detalle/GaleriaPropiedad';
@@ -203,7 +203,7 @@ export default async function PaginaDetallePropiedad({
   const precioFormateado = formatearPrecio(valorMostrar, moneda);
 
   // Server Action pre-vinculado para que el cliente no controle slug/codigo
-  const accionContacto = guardarLead.bind(null, propiedad.slug, propiedad.codigoPropiedad);
+  const accionContacto = crearLead.bind(null, 'formulario_detalle', propiedad.slug, propiedad.codigoPropiedad);
 
   const ubicacionCompleta = [
     propiedad.ubicacion.barrio,

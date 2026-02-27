@@ -3,11 +3,12 @@
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
-import type { ResultadoGuardarLead } from '@/lib/leads/guardarLead';
 import type { CamposFormularioContacto } from '@/types/lead';
 
+type ResultadoContacto = { ok: true } | { ok: false; error: string };
+
 interface Props {
-  accion: (campos: CamposFormularioContacto) => Promise<ResultadoGuardarLead>;
+  accion: (campos: CamposFormularioContacto) => Promise<ResultadoContacto>;
   whatsappAgente?: string;
   tituloPropiedad: string;
 }
@@ -43,7 +44,7 @@ function IconoWhatsApp() {
 // ── Componente ────────────────────────────────────────────────────────────────
 
 export default function FormularioContacto({ accion, whatsappAgente, tituloPropiedad }: Props) {
-  const [resultado, setResultado] = useState<ResultadoGuardarLead | null>(null);
+  const [resultado, setResultado] = useState<ResultadoContacto | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -165,7 +166,7 @@ export default function FormularioContacto({ accion, whatsappAgente, tituloPropi
           </div>
 
           {/* Error del servidor */}
-          {resultado?.error && (
+          {resultado?.ok === false && (
             <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2.5" role="alert">
               {resultado.error}
             </p>
