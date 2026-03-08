@@ -324,24 +324,28 @@ export default async function PaginaDetallePropiedad({
 
           {/* Stats principales */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
-              <IconoCama />
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {caracteristicas.habitaciones}
-              </p>
-              <p className="text-xs text-gray-500">
-                {caracteristicas.habitaciones === 1 ? 'Habitación' : 'Habitaciones'}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
-              <IconoBano />
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {caracteristicas.banos}
-              </p>
-              <p className="text-xs text-gray-500">
-                {caracteristicas.banos === 1 ? 'Baño' : 'Baños'}
-              </p>
-            </div>
+            {caracteristicas.habitaciones != null && (
+              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
+                <IconoCama />
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {caracteristicas.habitaciones}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {caracteristicas.habitaciones === 1 ? 'Habitación' : 'Habitaciones'}
+                </p>
+              </div>
+            )}
+            {caracteristicas.banos != null && (
+              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
+                <IconoBano />
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {caracteristicas.banos}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {caracteristicas.banos === 1 ? 'Baño' : 'Baños'}
+                </p>
+              </div>
+            )}
             <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
               <IconoArea />
               <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -349,15 +353,17 @@ export default async function PaginaDetallePropiedad({
               </p>
               <p className="text-xs text-gray-500">m² construidos</p>
             </div>
-            <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
-              <IconoCoche />
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {caracteristicas.parqueaderos}
-              </p>
-              <p className="text-xs text-gray-500">
-                {caracteristicas.parqueaderos === 1 ? 'Parqueadero' : 'Parqueaderos'}
-              </p>
-            </div>
+            {caracteristicas.parqueaderos != null && (
+              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 text-center space-y-1">
+                <IconoCoche />
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {caracteristicas.parqueaderos}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {caracteristicas.parqueaderos === 1 ? 'Parqueadero' : 'Parqueaderos'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Descripción */}

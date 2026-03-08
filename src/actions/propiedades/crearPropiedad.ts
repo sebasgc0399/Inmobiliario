@@ -34,6 +34,7 @@ export interface DatosCrearPropiedad {
     precioListadoBanco?: number;
     documentosRequeridos?: string[];
     notasInternas?: string;
+    observacionesBanco?: string;
     aceptaContraoferta: boolean;
   };
 
@@ -56,11 +57,11 @@ export interface DatosCrearPropiedad {
   };
 
   caracteristicas: {
-    habitaciones: number;
-    banos: number;
+    habitaciones?: number;
+    banos?: number;
     metrosCuadrados: number;
     metrosConstruidos?: number;
-    parqueaderos: number;
+    parqueaderos?: number;
     pisos?: number;
     piso?: number;
     estrato?: Estrato;
@@ -178,11 +179,11 @@ export async function crearPropiedad(
         },
 
         caracteristicas: {
-          habitaciones: datos.caracteristicas.habitaciones,
-          banos: datos.caracteristicas.banos,
           metrosCuadrados: datos.caracteristicas.metrosCuadrados,
-          parqueaderos: datos.caracteristicas.parqueaderos,
           instalaciones: datos.caracteristicas.instalaciones ?? [],
+          ...(datos.caracteristicas.habitaciones !== undefined && { habitaciones: datos.caracteristicas.habitaciones }),
+          ...(datos.caracteristicas.banos !== undefined && { banos: datos.caracteristicas.banos }),
+          ...(datos.caracteristicas.parqueaderos !== undefined && { parqueaderos: datos.caracteristicas.parqueaderos }),
           ...(datos.caracteristicas.metrosConstruidos !== undefined && { metrosConstruidos: datos.caracteristicas.metrosConstruidos }),
           ...(datos.caracteristicas.pisos !== undefined && { pisos: datos.caracteristicas.pisos }),
           ...(datos.caracteristicas.piso !== undefined && { piso: datos.caracteristicas.piso }),
@@ -207,6 +208,7 @@ export async function crearPropiedad(
           ...(datos.inversion.precioListadoBanco !== undefined && { precioListadoBanco: datos.inversion.precioListadoBanco }),
           ...(datos.inversion.documentosRequeridos && datos.inversion.documentosRequeridos.length > 0 && { documentosRequeridos: datos.inversion.documentosRequeridos }),
           ...(datos.inversion.notasInternas && { notasInternas: datos.inversion.notasInternas }),
+          ...(datos.inversion.observacionesBanco && { observacionesBanco: datos.inversion.observacionesBanco }),
         };
       }
 

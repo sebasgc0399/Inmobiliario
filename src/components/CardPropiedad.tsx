@@ -163,14 +163,18 @@ export default function CardPropiedad({ propiedad, monedaUsuario }: Props) {
 
         {/* Características principales */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-0.5">
-          <span className="flex items-center gap-1.5">
-            <IconoCama />
-            {caracteristicas.habitaciones} hab.
-          </span>
-          <span className="flex items-center gap-1.5">
-            <IconoBano />
-            {caracteristicas.banos} baños
-          </span>
+          {caracteristicas.habitaciones != null && (
+            <span className="flex items-center gap-1.5">
+              <IconoCama />
+              {caracteristicas.habitaciones} hab.
+            </span>
+          )}
+          {caracteristicas.banos != null && (
+            <span className="flex items-center gap-1.5">
+              <IconoBano />
+              {caracteristicas.banos} baños
+            </span>
+          )}
           <span className="flex items-center gap-1.5">
             <IconoArea />
             {caracteristicas.metrosCuadrados} m²

@@ -3,7 +3,20 @@
     "allow": [
       "Bash(ls -la src/app/\\\\\\(public\\\\\\)/propiedades/[slug]/page.tsx)",
       "Bash(grep -n \"FiltrosBusquedaServidor\" src/types/*.ts)",
-      "Read(//d/Proyectos VS CODE/inmobiliario/Inmobiliario/src/types/**)"
+      "Read(//d/Proyectos VS CODE/inmobiliario/Inmobiliario/src/types/**)",
+      "Bash(kill %1)",
+      "Bash(taskkill /PID 99064 /F)",
+      "Bash(taskkill /IM \"node.exe\" /F)",
+      "Bash(rm -rf .next)",
+      "Bash(npm run dev)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(rm -rf \"d:/Proyectos VS CODE/inmobiliaria/Inmobiliario/.next/dev/lock\")",
+      "Read(//d/Proyectos/ VS/ CODE/inmobiliaria/Inmobiliario/src/types/**)",
+      "Bash(grep -E \"\\\\.tsx$|^d\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario"
     ]
   }
 }

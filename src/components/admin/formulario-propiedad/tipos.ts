@@ -52,17 +52,17 @@ export interface CamposFormulario {
 
   // ── Características ───────────────────────────────────────────────────────
   caracteristicas: {
-    habitaciones: number;
-    banos: number;
+    habitaciones: number | '';   // vacío cuando no aplica (ej. inversión)
+    banos: number | '';          // vacío cuando no aplica (ej. inversión)
     metrosCuadrados: number;
-    metrosConstruidos: string; // string vacío si no hay
-    parqueaderos: number;
-    pisos: string;             // string vacío si no hay
-    piso: string;              // string vacío si no hay
-    estrato: string;           // '1'–'6' o '' si no aplica
-    antiguedad: string;        // string vacío si no hay
+    metrosConstruidos: string;   // string vacío si no hay
+    parqueaderos: number | '';   // vacío cuando no aplica (ej. inversión)
+    pisos: string;               // string vacío si no hay
+    piso: string;                // string vacío si no hay
+    estrato: string;             // '1'–'6' o '' si no aplica
+    antiguedad: string;          // string vacío si no hay
     permiteRentaCorta: boolean;
-    instalaciones: string[];   // gestionado vía setValue
+    instalaciones: string[];     // gestionado vía setValue
   };
 
   // ── Precio ────────────────────────────────────────────────────────────────
@@ -88,6 +88,7 @@ export interface CamposFormulario {
     precioListadoBanco: string;    // string para el input, se parsea al enviar
     documentosRequeridos: string[]; // gestionado vía setValue
     notasInternas: string;
+    observacionesBanco: string;  // observaciones del PDF bancario (sin datos de contacto)
     aceptaContraoferta: boolean;
   };
 }

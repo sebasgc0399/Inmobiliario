@@ -61,10 +61,10 @@ function propiedadACamposFormulario(p: Propiedad): CamposFormulario {
     // Los campos obligatorios (number) se pasan directamente.
     // Los opcionales (number | undefined) se convierten a string para compatibilidad con input.
     caracteristicas: {
-      habitaciones: p.caracteristicas.habitaciones,
-      banos: p.caracteristicas.banos,
+      habitaciones: p.caracteristicas.habitaciones ?? '',
+      banos: p.caracteristicas.banos ?? '',
       metrosCuadrados: p.caracteristicas.metrosCuadrados,
-      parqueaderos: p.caracteristicas.parqueaderos,
+      parqueaderos: p.caracteristicas.parqueaderos ?? '',
       metrosConstruidos: p.caracteristicas.metrosConstruidos?.toString() ?? '',
       pisos: p.caracteristicas.pisos?.toString() ?? '',
       piso: p.caracteristicas.piso?.toString() ?? '',
@@ -97,6 +97,7 @@ function propiedadACamposFormulario(p: Propiedad): CamposFormulario {
       precioListadoBanco: p.inversion?.precioListadoBanco?.toString() ?? '',
       documentosRequeridos: p.inversion?.documentosRequeridos ?? [],
       notasInternas: p.inversion?.notasInternas ?? '',
+      observacionesBanco: p.inversion?.observacionesBanco ?? '',
       aceptaContraoferta: p.inversion?.aceptaContraoferta ?? true,
     },
   };

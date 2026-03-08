@@ -78,6 +78,8 @@ export default function SeccionBasica({
 
   const titulo = useWatch({ control, name: 'titulo' });
   const slugValue = useWatch({ control, name: 'slug' });
+  const lineaNegocio = useWatch({ control, name: 'lineaNegocio' });
+  const esInversion = lineaNegocio === 'inversion';
   const tags = watch('tags');
 
   // Auto-generar slug desde el título (solo en modo creación y si no fue editado manualmente)
@@ -222,6 +224,13 @@ export default function SeccionBasica({
 
         {/* Descripción */}
         <div>
+          {esInversion && (
+            <div className="mb-2 rounded-lg border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <strong>{'\u26A0\uFE0F'} REGLA ESTRICTA:</strong> Asegúrese de borrar cualquier número de
+              teléfono, correo electrónico o nombre del banco antes de guardar. Todo contacto debe pasar
+              por la plataforma.
+            </div>
+          )}
           <label htmlFor="descripcion" className="mb-1 block text-sm font-medium text-gray-700">
             Descripción <span aria-hidden="true" className="text-red-500">*</span>
           </label>

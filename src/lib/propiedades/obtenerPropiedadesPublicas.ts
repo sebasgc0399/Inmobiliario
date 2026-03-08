@@ -73,7 +73,9 @@ function aplicarFiltrosOrdenYLimite(
 
   if (typeof filtros.habitacionesMin === 'number') {
     resultado = resultado.filter(
-      (propiedad) => propiedad.caracteristicas.habitaciones >= filtros.habitacionesMin!,
+      (propiedad) =>
+        propiedad.caracteristicas.habitaciones != null &&
+        propiedad.caracteristicas.habitaciones >= filtros.habitacionesMin!,
     );
   }
 

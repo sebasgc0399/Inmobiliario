@@ -174,6 +174,25 @@ export default function SeccionInversion() {
             {...register('inversion.notasInternas')}
           />
         </div>
+
+        {/* Observaciones del Banco */}
+        <div>
+          <div className="mb-2 rounded-lg border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <strong>{'\u26A0\uFE0F'} REGLA ESTRICTA:</strong> Asegúrese de borrar cualquier número de
+            teléfono, correo electrónico o nombre del banco antes de guardar. Todo contacto debe pasar
+            por la plataforma.
+          </div>
+          <label htmlFor="inv-observaciones" className="mb-1 block text-sm font-medium text-gray-700">
+            Observaciones del Banco <span className="text-xs text-gray-400">(visible al público)</span>
+          </label>
+          <textarea
+            id="inv-observaciones"
+            rows={4}
+            className={`${claseInput} resize-y`}
+            placeholder="Observaciones del PDF bancario (sin teléfonos, correos ni nombre del banco)"
+            {...register('inversion.observacionesBanco')}
+          />
+        </div>
       </div>
     </section>
   );

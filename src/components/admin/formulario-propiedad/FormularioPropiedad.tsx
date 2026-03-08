@@ -65,11 +65,11 @@ const VALORES_INICIALES: CamposFormulario = {
     longitud: '',
   },
   caracteristicas: {
-    habitaciones: 1,
-    banos: 1,
+    habitaciones: '',
+    banos: '',
     metrosCuadrados: 0,
     metrosConstruidos: '',
-    parqueaderos: 0,
+    parqueaderos: '',
     pisos: '',
     piso: '',
     estrato: '',
@@ -91,6 +91,7 @@ const VALORES_INICIALES: CamposFormulario = {
     precioListadoBanco: '',
     documentosRequeridos: [],
     notasInternas: '',
+    observacionesBanco: '',
     aceptaContraoferta: true,
   },
 };
@@ -154,11 +155,17 @@ function transformarFormADatos(
     },
 
     caracteristicas: {
-      habitaciones: campos.caracteristicas.habitaciones,
-      banos: campos.caracteristicas.banos,
       metrosCuadrados: campos.caracteristicas.metrosCuadrados,
-      parqueaderos: campos.caracteristicas.parqueaderos,
       instalaciones: campos.caracteristicas.instalaciones,
+      ...(campos.caracteristicas.habitaciones !== '' && {
+        habitaciones: campos.caracteristicas.habitaciones,
+      }),
+      ...(campos.caracteristicas.banos !== '' && {
+        banos: campos.caracteristicas.banos,
+      }),
+      ...(campos.caracteristicas.parqueaderos !== '' && {
+        parqueaderos: campos.caracteristicas.parqueaderos,
+      }),
       ...(campos.caracteristicas.metrosConstruidos && {
         metrosConstruidos: parsearNumero(campos.caracteristicas.metrosConstruidos),
       }),
@@ -221,6 +228,7 @@ function transformarFormADatos(
         documentosRequeridos: campos.inversion.documentosRequeridos,
       }),
       ...(campos.inversion.notasInternas && { notasInternas: campos.inversion.notasInternas }),
+      ...(campos.inversion.observacionesBanco && { observacionesBanco: campos.inversion.observacionesBanco }),
     };
   }
 

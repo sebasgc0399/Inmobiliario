@@ -69,13 +69,13 @@ export interface Precio {
 }
 
 export interface Caracteristicas {
-  habitaciones: number;
-  banos: number;
+  habitaciones?: number;
+  banos?: number;
   /** Área total del lote / terreno en m² */
   metrosCuadrados: number;
   /** Área construida en m² */
   metrosConstruidos?: number;
-  parqueaderos: number;
+  parqueaderos?: number;
   /** Número de pisos de la construcción */
   pisos?: number;
   /** Piso en el que se ubica la unidad (para apartamentos) */
@@ -117,6 +117,8 @@ export interface DatosInversion {
   documentosRequeridos?: string[];
   /** Notas internas sobre el proceso con el banco */
   notasInternas?: string;
+  /** Observaciones del banco copiadas del PDF original (sin datos de contacto) */
+  observacionesBanco?: string;
   /** Permite ofertas por debajo del precio de lista */
   aceptaContraoferta: boolean;
 }
