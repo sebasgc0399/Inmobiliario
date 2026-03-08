@@ -9,10 +9,10 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: "Inmobiliaria",
-    template: "%s | Inmobiliaria",
+    default: "IsaHouse",
+    template: "%s | IsaHouse",
   },
-  description: "Encuentra tu propiedad ideal en Colombia.",
+  description: "Base institucional y panel administrativo para la reconstruccion de IsaHouse.",
 };
 
 export default function RootLayout({

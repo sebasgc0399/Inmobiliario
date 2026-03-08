@@ -29,7 +29,35 @@ function esErrorAuthFirebase(error: unknown): boolean {
   return typeof codigo === 'string' && codigo.startsWith('auth/');
 }
 
+function esSolicitudMismaOrigen(request: Request): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    return false;
+  }
+
+  return origin === new URL(request.url).origin;
+}
+
+function esContenidoJson(request: Request): boolean {
+  const contentType = request.headers.get('content-type');
+  return contentType?.toLowerCase().includes('application/json') ?? false;
+}
+
 export async function POST(request: Request) {
+  if (!esSolicitudMismaOrigen(request)) {
+    return NextResponse.json(
+      { ok: false, error: 'Origen no permitido.' },
+      { status: 403 },
+    );
+  }
+
+  if (!esContenidoJson(request)) {
+    return NextResponse.json(
+      { ok: false, error: 'La solicitud debe enviarse como JSON.' },
+      { status: 415 },
+    );
+  }
+
   let cuerpo: unknown;
 
   try {

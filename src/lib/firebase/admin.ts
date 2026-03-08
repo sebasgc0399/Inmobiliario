@@ -2,14 +2,11 @@ import 'server-only';
 
 import { cert, getApps, initializeApp, type App, type ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 
 type ClaveEnvPrivada =
   | 'FIREBASE_PROJECT_ID'
   | 'FIREBASE_CLIENT_EMAIL'
-  | 'FIREBASE_PRIVATE_KEY'
-  | 'FIREBASE_STORAGE_BUCKET';
+  | 'FIREBASE_PRIVATE_KEY';
 
 function obtenerEnvPrivada(clave: ClaveEnvPrivada): string {
   const valor = process.env[clave];
@@ -43,20 +40,11 @@ function obtenerAppAdmin(): App {
   appAdminMemo = initializeApp(
     {
       credential: cert(credenciales),
-      storageBucket: obtenerEnvPrivada('FIREBASE_STORAGE_BUCKET'),
     },
     nombreAppAdmin,
   );
 
   return appAdminMemo;
-}
-
-export function obtenerAdminDb() {
-  return getFirestore(obtenerAppAdmin());
-}
-
-export function obtenerAdminStorage() {
-  return getStorage(obtenerAppAdmin());
 }
 
 export function obtenerAdminAuth() {
