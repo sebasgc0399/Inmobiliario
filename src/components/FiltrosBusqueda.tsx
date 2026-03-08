@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation';
-import type { ModoNegocio, TipoPropiedad, Moneda } from '@/types';
+import type { LineaNegocio, TipoPropiedad, Moneda } from '@/types';
 import SelectPersonalizado from '@/components/SelectPersonalizado';
 import ubicacionesData from '@/data/ubicaciones.json';
 
@@ -14,10 +14,10 @@ const departamentos = Object.keys(ubicacionesData[PAIS]) as DepartamentoKey[];
 
 // ── Opciones estáticas ────────────────────────────────────────────────────────
 
-const opcionesNegocio: { valor: ModoNegocio | ''; etiqueta: string }[] = [
-  { valor: '', etiqueta: 'Compra o alquiler' },
-  { valor: 'venta', etiqueta: 'Venta' },
-  { valor: 'alquiler', etiqueta: 'Alquiler' },
+const opcionesLinea: { valor: LineaNegocio | ''; etiqueta: string }[] = [
+  { valor: '', etiqueta: 'Todas las líneas' },
+  { valor: 'tradicional', etiqueta: 'Venta Tradicional' },
+  { valor: 'inversion', etiqueta: 'Oportunidades de Inversión' },
 ];
 
 const opcionesTipo: { valor: TipoPropiedad | ''; etiqueta: string }[] = [
@@ -66,7 +66,7 @@ const opcionesOrden: { valor: string; etiqueta: string }[] = [
 // ── Estado del formulario ─────────────────────────────────────────────────────
 
 interface Filtros {
-  negocio: string;
+  linea: string;
   tipo: string;
   departamento: string;
   municipio: string;
@@ -86,7 +86,7 @@ function serializarDesdeUrl(searchParams: ReadonlyURLSearchParams): Filtros {
   const monedaDesdeUrl = searchParams.get('moneda');
 
   return {
-    negocio: searchParams.get('negocio') ?? '',
+    linea: searchParams.get('linea') ?? '',
     tipo: searchParams.get('tipo') ?? '',
     departamento: searchParams.get('departamento') ?? '',
     municipio: searchParams.get('municipio') ?? '',
@@ -150,7 +150,7 @@ function FiltrosInternos() {
     }
     const timer = setTimeout(() => {
       const sp = new URLSearchParams();
-      if (filtros.negocio) sp.set('negocio', filtros.negocio);
+      if (filtros.linea) sp.set('linea', filtros.linea);
       if (filtros.tipo) sp.set('tipo', filtros.tipo);
       if (filtros.departamento) sp.set('departamento', filtros.departamento);
       if (filtros.municipio.trim()) sp.set('municipio', filtros.municipio.trim());
@@ -190,7 +190,7 @@ function FiltrosInternos() {
 
   function limpiar() {
     setFiltros({
-      negocio: '',
+      linea: '',
       tipo: '',
       departamento: '',
       municipio: '',
@@ -260,15 +260,15 @@ function FiltrosInternos() {
       {/* Fila 1: Clasificación y ubicación */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 
-        {/* Negocio */}
+        {/* Línea de Negocio */}
         <div className="flex flex-col">
-          <label htmlFor="negocio" className={claseLabel}>Negocio</label>
+          <label htmlFor="linea" className={claseLabel}>Línea</label>
           <SelectPersonalizado
-            id="negocio"
-            valor={filtros.negocio}
-            onChange={(val) => cambiar('negocio', val)}
-            opciones={opcionesNegocio}
-            activo={!!filtros.negocio}
+            id="linea"
+            valor={filtros.linea}
+            onChange={(val) => cambiar('linea', val)}
+            opciones={opcionesLinea}
+            activo={!!filtros.linea}
           />
         </div>
 
@@ -420,10 +420,10 @@ function FiltrosInternos() {
       {filtrosActivos > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 mt-4 pt-3">
           <span className="text-xs text-gray-400 font-medium shrink-0">Filtros activos:</span>
-          {filtros.negocio && (
+          {filtros.linea && (
             <ChipFiltro
-              etiqueta={opcionesNegocio.find((o) => o.valor === filtros.negocio)?.etiqueta ?? filtros.negocio}
-              onRemover={() => cambiar('negocio', '')}
+              etiqueta={opcionesLinea.find((o) => o.valor === filtros.linea)?.etiqueta ?? filtros.linea}
+              onRemover={() => cambiar('linea', '')}
             />
           )}
           {filtros.tipo && (

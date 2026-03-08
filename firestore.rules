@@ -63,6 +63,7 @@ service cloud.firestore {
           'codigoPropiedad',
           'tipo',
           'modoNegocio',
+          'lineaNegocio',
           'condicion',
           'estadoPublicacion',
           'titulo',
@@ -79,6 +80,7 @@ service cloud.firestore {
           'codigoPropiedad',
           'tipo',
           'modoNegocio',
+          'lineaNegocio',
           'condicion',
           'estadoPublicacion',
           'titulo',
@@ -92,6 +94,7 @@ service cloud.firestore {
           'videoUrl',
           'seo',
           'agente',
+          'inversion',
           'creadoEn',
           'actualizadoEn',
           'publicadoEn',
@@ -102,9 +105,10 @@ service cloud.firestore {
         && stringNoVacio(data.slug)
         && stringNoVacio(data.codigoPropiedad)
         && data.tipo in ['casa', 'apartamento', 'apartaestudio', 'finca', 'local', 'oficina', 'terreno', 'bodega']
-        && data.modoNegocio in ['venta', 'alquiler', 'venta_alquiler']
+        && data.modoNegocio == 'venta'
+        && data.lineaNegocio in ['tradicional', 'inversion']
         && data.condicion in ['nuevo', 'usado', 'sobre_planos']
-        && data.estadoPublicacion in ['activo', 'inactivo', 'vendido', 'arrendado', 'borrador']
+        && data.estadoPublicacion in ['activo', 'inactivo', 'vendido', 'borrador']
         && stringNoVacio(data.titulo)
         && stringNoVacio(data.descripcion)
         && precioValido(data.precio)
@@ -127,33 +131,40 @@ service cloud.firestore {
     function leadValido(data) {
       return data is map
         && data.keys().hasAll([
-          'slugPropiedad',
-          'codigoPropiedad',
           'nombre',
           'telefono',
           'mensaje',
           'origen',
+          'estado',
           'creadoEn',
-          'estado'
+          'actualizadoEn'
         ])
         && data.keys().hasOnly([
           'slugPropiedad',
           'codigoPropiedad',
           'nombre',
           'telefono',
+          'email',
           'mensaje',
           'origen',
+          'estado',
+          'oferta',
+          'notas',
           'creadoEn',
-          'estado'
+          'actualizadoEn'
         ])
-        && stringNoVacio(data.slugPropiedad)
-        && stringNoVacio(data.codigoPropiedad)
         && stringNoVacio(data.nombre) && data.nombre.size() <= 120
         && stringNoVacio(data.telefono) && data.telefono.size() <= 30
         && stringNoVacio(data.mensaje) && data.mensaje.size() <= 1000
-        && data.origen in ['formulario_detalle', 'formulario_contacto']
+        && data.origen in ['formulario_detalle', 'formulario_contacto', 'formulario_oferta', 'manual_admin']
+        && data.estado == 'nuevo'
         && data.creadoEn is timestamp
-        && data.estado == 'nuevo';
+        && data.actualizadoEn is timestamp
+        && (!('slugPropiedad' in data) || data.slugPropiedad is string)
+        && (!('codigoPropiedad' in data) || data.codigoPropiedad is string)
+        && (!('email' in data) || data.email is string)
+        && (!('notas' in data) || data.notas is string)
+        && (!('oferta' in data) || data.oferta is map);
     }
 
     match /propiedades/{propiedadId} {

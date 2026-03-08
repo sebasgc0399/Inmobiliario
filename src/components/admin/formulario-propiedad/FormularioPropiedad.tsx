@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 
 import { crearPropiedad } from '@/actions/propiedades/crearPropiedad';
@@ -15,6 +15,7 @@ import SeccionUbicacion from './SeccionUbicacion';
 import SeccionCaracteristicas from './SeccionCaracteristicas';
 import SeccionPrecio from './SeccionPrecio';
 import SeccionSEO from './SeccionSEO';
+import SeccionInversion from './SeccionInversion';
 import GaleriaImagenes from './GaleriaImagenes';
 import type { CamposFormulario } from './tipos';
 
@@ -46,7 +47,7 @@ const VALORES_INICIALES: CamposFormulario = {
   slug: '',
   codigoPropiedad: '',
   tipo: 'apartamento',
-  modoNegocio: 'venta',
+  lineaNegocio: 'tradicional',
   condicion: 'usado',
   destacado: false,
   tourVirtual: '',
@@ -84,6 +85,14 @@ const VALORES_INICIALES: CamposFormulario = {
     negociable: false,
   },
   seo: { metaTitle: '', metaDescription: '', keywords: [] },
+  inversion: {
+    entidadBancaria: '',
+    referenciaEntidad: '',
+    precioListadoBanco: '',
+    documentosRequeridos: [],
+    notasInternas: '',
+    aceptaContraoferta: true,
+  },
 };
 
 // ── Helper: transformar CamposFormulario → datos para la Server Action ─────
@@ -112,7 +121,8 @@ function transformarFormADatos(
     titulo: campos.titulo,
     descripcion: campos.descripcion,
     tipo: campos.tipo,
-    modoNegocio: campos.modoNegocio,
+    modoNegocio: 'venta',
+    lineaNegocio: campos.lineaNegocio,
     condicion: campos.condicion,
     destacado: campos.destacado,
 
@@ -198,6 +208,22 @@ function transformarFormADatos(
     };
   }
 
+  // Inversión — solo si la línea de negocio es inversión
+  if (campos.lineaNegocio === 'inversion' && campos.inversion.entidadBancaria) {
+    datos.inversion = {
+      entidadBancaria: campos.inversion.entidadBancaria,
+      aceptaContraoferta: campos.inversion.aceptaContraoferta,
+      ...(campos.inversion.referenciaEntidad && { referenciaEntidad: campos.inversion.referenciaEntidad }),
+      ...(campos.inversion.precioListadoBanco && {
+        precioListadoBanco: parsearNumero(campos.inversion.precioListadoBanco),
+      }),
+      ...(campos.inversion.documentosRequeridos.length > 0 && {
+        documentosRequeridos: campos.inversion.documentosRequeridos,
+      }),
+      ...(campos.inversion.notasInternas && { notasInternas: campos.inversion.notasInternas }),
+    };
+  }
+
   return datos;
 }
 
@@ -232,6 +258,7 @@ export default function FormularioPropiedad({
   });
 
   const codigoPropiedad = methods.watch('codigoPropiedad');
+  const lineaNegocio = useWatch({ control: methods.control, name: 'lineaNegocio' });
 
   // Callback para GaleriaImagenes
   function manejarCambioGaleria(nuevasImagenes: string[], nuevaPortada: string) {
@@ -310,6 +337,7 @@ export default function FormularioPropiedad({
           <SeccionUbicacion />
           <SeccionCaracteristicas />
           <SeccionPrecio />
+          {lineaNegocio === 'inversion' && <SeccionInversion />}
           <SeccionSEO />
 
           {/* Galería de imágenes — estado fuera de RHF */}

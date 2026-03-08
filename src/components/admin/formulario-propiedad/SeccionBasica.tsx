@@ -21,10 +21,9 @@ const OPCIONES_TIPO = [
   { valor: 'bodega', etiqueta: 'Bodega' },
 ];
 
-const OPCIONES_MODO_NEGOCIO = [
-  { valor: 'venta', etiqueta: 'Venta' },
-  { valor: 'alquiler', etiqueta: 'Alquiler' },
-  { valor: 'venta_alquiler', etiqueta: 'Venta y Alquiler' },
+const OPCIONES_LINEA_NEGOCIO = [
+  { valor: 'tradicional', etiqueta: 'Venta Tradicional' },
+  { valor: 'inversion', etiqueta: 'Inversión de Oportunidad' },
 ];
 
 const OPCIONES_CONDICION = [
@@ -239,8 +238,22 @@ export default function SeccionBasica({
           {errors.descripcion && <p className={claseError}>{errors.descripcion.message}</p>}
         </div>
 
-        {/* Tipo / Modo Negocio / Condición */}
+        {/* Línea de Negocio / Tipo / Condición */}
         <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Línea de Negocio</label>
+            <Controller
+              control={control}
+              name="lineaNegocio"
+              render={({ field }) => (
+                <SelectPersonalizado
+                  valor={field.value}
+                  onChange={field.onChange}
+                  opciones={OPCIONES_LINEA_NEGOCIO}
+                />
+              )}
+            />
+          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Tipo</label>
             <Controller
@@ -251,20 +264,6 @@ export default function SeccionBasica({
                   valor={field.value}
                   onChange={field.onChange}
                   opciones={OPCIONES_TIPO}
-                />
-              )}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Modo de Negocio</label>
-            <Controller
-              control={control}
-              name="modoNegocio"
-              render={({ field }) => (
-                <SelectPersonalizado
-                  valor={field.value}
-                  onChange={field.onChange}
-                  opciones={OPCIONES_MODO_NEGOCIO}
                 />
               )}
             />

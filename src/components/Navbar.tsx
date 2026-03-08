@@ -19,6 +19,9 @@ export default function Navbar() {
           <Link href="/" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
             Inicio
           </Link>
+          <Link href="/inversiones" className="text-amber-700 hover:text-amber-900 text-sm font-medium transition-colors">
+            Inversiones
+          </Link>
           <Link href="/nosotros" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
             Nosotros
           </Link>
@@ -89,6 +92,13 @@ export default function Navbar() {
             onClick={() => setMenuAbierto(false)}
           >
             Inicio
+          </Link>
+          <Link
+            href="/inversiones"
+            className="text-amber-700 hover:text-amber-900 text-sm font-medium py-1 transition-colors"
+            onClick={() => setMenuAbierto(false)}
+          >
+            Inversiones
           </Link>
           <Link
             href="/nosotros"

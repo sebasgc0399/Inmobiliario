@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { obtenerAdminDb } from '@/lib/firebase/admin';
 import { validarSesionAdmin } from '@/lib/admin/validarSesionAdmin';
 import { registrarAuditoria } from '@/lib/admin/registrarAuditoria';
-import type { ResultadoAccion, TipoPropiedad, ModoNegocio, CondicionInmueble, Moneda, Estrato } from '@/types';
+import type { ResultadoAccion, TipoPropiedad, ModoNegocio, LineaNegocio, CondicionInmueble, Moneda, Estrato } from '@/types';
 
 // ── Tipo de entrada ────────────────────────────────────────────────────────────
 // Extiende los datos de creación con los campos necesarios para la actualización.
@@ -27,11 +27,21 @@ export interface DatosActualizarPropiedad {
   descripcion: string;
   tipo: TipoPropiedad;
   modoNegocio: ModoNegocio;
+  lineaNegocio: LineaNegocio;
   condicion: CondicionInmueble;
   destacado: boolean;
   tourVirtual?: string;
   videoUrl?: string;
   tags?: string[];
+
+  inversion?: {
+    entidadBancaria: string;
+    referenciaEntidad?: string;
+    precioListadoBanco?: number;
+    documentosRequeridos?: string[];
+    notasInternas?: string;
+    aceptaContraoferta: boolean;
+  };
 
   precio: {
     valor: number;
@@ -171,6 +181,7 @@ export async function actualizarPropiedad(
         descripcion: datos.descripcion.trim(),
         tipo: datos.tipo,
         modoNegocio: datos.modoNegocio,
+        lineaNegocio: datos.lineaNegocio,
         condicion: datos.condicion,
         destacado: datos.destacado ?? false,
         imagenes: datos.imagenes ?? [],
@@ -223,6 +234,18 @@ export async function actualizarPropiedad(
       if (datos.videoUrl) docActualizado.videoUrl = datos.videoUrl;
       if (datos.tags && datos.tags.length > 0) docActualizado.tags = datos.tags;
 
+      // Inversión — solo si la línea de negocio es inversión
+      if (datos.lineaNegocio === 'inversion' && datos.inversion) {
+        docActualizado.inversion = {
+          entidadBancaria: datos.inversion.entidadBancaria,
+          aceptaContraoferta: datos.inversion.aceptaContraoferta,
+          ...(datos.inversion.referenciaEntidad && { referenciaEntidad: datos.inversion.referenciaEntidad }),
+          ...(datos.inversion.precioListadoBanco !== undefined && { precioListadoBanco: datos.inversion.precioListadoBanco }),
+          ...(datos.inversion.documentosRequeridos && datos.inversion.documentosRequeridos.length > 0 && { documentosRequeridos: datos.inversion.documentosRequeridos }),
+          ...(datos.inversion.notasInternas && { notasInternas: datos.inversion.notasInternas }),
+        };
+      }
+
       // SEO
       if (datos.seo) {
         const seoFiltrado: Record<string, unknown> = {};
@@ -260,8 +283,11 @@ export async function actualizarPropiedad(
     revalidatePath('/admin/propiedades');
     revalidatePath('/');
     revalidatePath(`/propiedades/${slugLimpio}`);
+    revalidatePath(`/inversiones/${slugLimpio}`);
+    revalidatePath('/inversiones');
     if (slugCambio && slugAnterior) {
       revalidatePath(`/propiedades/${slugAnterior}`);
+      revalidatePath(`/inversiones/${slugAnterior}`);
     }
 
     return { ok: true, data: { id: datos.id, slug: slugLimpio } };

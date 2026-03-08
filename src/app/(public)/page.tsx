@@ -3,13 +3,13 @@ import FiltrosBusqueda from '@/components/FiltrosBusqueda';
 import HeroBanner from '@/components/HeroBanner';
 import ListadoPropiedadesAsync from '@/components/ListadoPropiedadesAsync';
 import SkeletonListado from '@/components/SkeletonListado';
-import type { Estrato, FiltrosBusquedaServidor, Moneda, ModoNegocio, OrdenPropiedades, TipoPropiedad } from '@/types';
+import type { Estrato, FiltrosBusquedaServidor, Moneda, LineaNegocio, OrdenPropiedades, TipoPropiedad } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 interface SearchParams {
-  negocio?: string;
+  linea?: string;
   tipo?: string;
   municipio?: string;
   departamento?: string;
@@ -22,7 +22,7 @@ interface SearchParams {
 }
 
 const MONEDAS_VALIDAS: ReadonlyArray<Moneda> = ['COP', 'USD', 'EUR'];
-const NEGOCIOS_VALIDOS: ReadonlyArray<ModoNegocio> = ['venta', 'alquiler', 'venta_alquiler'];
+const LINEAS_VALIDAS: ReadonlyArray<LineaNegocio> = ['inversion', 'tradicional'];
 const TIPOS_VALIDOS: ReadonlyArray<TipoPropiedad> = [
   'casa',
   'apartamento',
@@ -42,9 +42,9 @@ function parseMoneda(valor?: string): Moneda {
   return 'COP';
 }
 
-function parseModoNegocio(valor?: string): ModoNegocio | undefined {
-  if (valor && NEGOCIOS_VALIDOS.includes(valor as ModoNegocio)) {
-    return valor as ModoNegocio;
+function parseLineaNegocio(valor?: string): LineaNegocio | undefined {
+  if (valor && LINEAS_VALIDAS.includes(valor as LineaNegocio)) {
+    return valor as LineaNegocio;
   }
 
   return undefined;
@@ -108,7 +108,7 @@ export default async function Home({
 
   const filtros: FiltrosBusquedaServidor = {
     moneda: monedaActual,
-    negocio: parseModoNegocio(params.negocio),
+    lineaNegocio: parseLineaNegocio(params.linea),
     tipo: parseTipoPropiedad(params.tipo),
     municipio: params.municipio?.trim() || undefined,
     departamento: params.departamento?.trim() || undefined,
@@ -120,7 +120,7 @@ export default async function Home({
   };
 
   const keyFiltros = [
-    params.negocio,
+    params.linea,
     params.tipo,
     params.municipio,
     params.departamento,

@@ -11,6 +11,15 @@ Nota de sincronizacion:
 * **Mercado:** Los inmuebles estan ubicados en Colombia (ej. Medellin, Antioquia, etc.), pero el sistema esta disenado para un publico e inversores internacionales (soporte multidivisa, indicativos internacionales, rentabilidad ROI).
 * **Foco:** Velocidad de carga, excelente experiencia de usuario (UX) en moviles y un panel de administracion agil.
 
+### 1.1 Modelo de Negocio Dual (Solo Venta)
+La plataforma opera bajo dos lineas de negocio estrictamente separadas, clasificadas por el campo `lineaNegocio` en cada propiedad:
+
+1. **Inversion de Oportunidad** (`lineaNegocio: 'inversion'`): Inmuebles embargados provenientes de entidades bancarias. El flujo de compra es manual: el usuario publico propone un monto de oferta a traves del formulario dedicado, y la administradora negocia directamente con el comite del banco. La identidad de la entidad bancaria propietaria es informacion **estrictamente confidencial** (ver Seccion 5).
+
+2. **Corretaje Tradicional** (`lineaNegocio: 'tradicional'`): Propiedades de clientes particulares gestionadas bajo el modelo inmobiliario estandar. Flujo de contacto clasico mediante formulario de consulta y WhatsApp.
+
+* **Restriccion innegociable:** El negocio es **exclusivamente de ventas**. El tipo `ModoNegocio` solo admite el valor `'venta'`. Queda **estrictamente prohibido** implementar logica, tipos, componentes de UI o rutas para "alquileres", "arriendos" o cualquier modalidad de negocio distinta a la venta.
+
 ## 2. Stack Tecnologico
 * **Framework Core:** Next.js (App Router estricto).
 * **Libreria UI:** React (Functional Components, Hooks).
@@ -32,10 +41,31 @@ Nota de sincronizacion:
 * **Serializacion de Datos:** Nunca pasar objetos no planos (como `Timestamp` de Firebase) desde Server Components a Client Components. Usar siempre `withConverter` en Firestore para mapear a `Date` o strings ISO.
 * **UI / UX:** Los componentes deben ser accesibles y 100% responsivos (Mobile-First).
 
+### 4.1 Enrutamiento por Linea de Negocio
+Las dos lineas de negocio exigen **rutas publicas separadas** para mantener un SEO diferenciado y una experiencia de usuario clara. Queda prohibido unificar ambas lineas en una ruta unica con renderizado condicional masivo.
+
+| Linea | Ruta de detalle | Ruta de listado |
+|-------|----------------|-----------------|
+| Inversion de Oportunidad | `/inversiones/[slug]` | `/inversiones` |
+| Corretaje Tradicional | `/propiedades/[slug]` | `/` (Home con filtros) |
+
+* **Redireccion cruzada:** Si un usuario accede a `/propiedades/[slug]` y la propiedad es de inversion, el Server Component debe ejecutar `redirect('/inversiones/[slug]')`. Lo mismo aplica a la inversa.
+* **`CardPropiedad`:** El componente genera su `href` de forma condicional segun `propiedad.lineaNegocio` (`/inversiones/${slug}` o `/propiedades/${slug}`).
+* **Pagina estatica `/inversiones/como-funciona`:** Contenido fijo en codigo que explica el proceso de compra de inmuebles embargados. No es editable desde el panel de administracion.
+
 ## 5. Seguridad y Rendimiento
 * **Seguridad Firestore:** La logica de validacion de base de datos se manejara mediante Reglas de Seguridad de Firestore, pero el frontend debe evitar enviar datos mal formados.
 * **Variables de Entorno:** Nunca exponer claves secretas (`NEXT_PUBLIC_...` solo para llaves publicas de Firebase).
 * **Imagenes:** Usar siempre el componente `<Image />` de Next.js para carga diferida (lazy loading) y optimizacion de peso, crucial para el SEO inmobiliario.
+
+### 5.1 Regla de Oro de Privacidad — Datos de Inversion
+Para las propiedades de la linea de inversion, el campo `entidadBancaria` (nombre del banco propietario del inmueble embargado) es **informacion estrictamente confidencial**. Esta regla es **innegociable** y aplica sin excepciones:
+
+* `entidadBancaria` **NUNCA** debe renderizarse en el HTML publico de ninguna pagina.
+* **NUNCA** debe pasarse como prop a un Client Component.
+* Solo debe ser accesible en Firestore y visible en el panel de administracion (`/admin`).
+* Los demas campos de `DatosInversion` (como `documentosRequeridos` o `aceptaContraoferta`) **si** pueden exponerse al publico, ya que son informacion util para el comprador potencial.
+* **Verificacion obligatoria:** Al modificar la pagina `/inversiones/[slug]`, inspeccionar el HTML fuente renderizado para confirmar la ausencia total del nombre de la entidad bancaria.
 
 ## 6. Pruebas (Testing)
 * El codigo generado debe estar disenado para ser testeable (funciones puras donde sea posible, inyeccion de dependencias simple).
@@ -64,5 +94,8 @@ Nota de sincronizacion:
 * **Cierre de excepcion:** Cuando se migren filtros y se implemente el formulario de contacto, aplicar React Hook Form en esos flujos y retirar esta excepcion temporal.
 
 ## 10. Modelo de Datos Canonico
-* **Fuente de verdad:** `src/types/propiedad.ts` define el contrato de datos central del proyecto.
-* Toda operacion con Firestore, todo componente que muestre o edite una propiedad, y toda funcion de utilidad deben tiparse contra la interfaz `Propiedad` y sus sub-interfaces (`Ubicacion`, `Precio`, `Caracteristicas`, etc.) definidas en ese archivo.
+* **Fuente de verdad:** `src/types/propiedad.ts` define el contrato de datos central del proyecto. Toda operacion con Firestore, todo componente que muestre o edite una propiedad, y toda funcion de utilidad deben tiparse contra la interfaz `Propiedad` y sus sub-interfaces (`Ubicacion`, `Precio`, `Caracteristicas`, etc.) definidas en ese archivo.
+* **Clasificacion del inventario:** El campo `lineaNegocio: LineaNegocio` (`'inversion' | 'tradicional'`) actua como discriminador principal. Determina la ruta publica, el formulario de contacto/oferta, los badges visuales y la logica de filtrado.
+* **Datos de inversion aislados:** La sub-interfaz `DatosInversion` encapsula los campos exclusivos de la linea de inversion (`entidadBancaria`, `referenciaEntidad`, `precioListadoBanco`, `documentosRequeridos`, `notasInternas`, `aceptaContraoferta`). Se almacena en `propiedad.inversion?` y solo se popula cuando `lineaNegocio === 'inversion'`.
+* **Modo de negocio congelado:** `ModoNegocio` queda reducido al valor unico `'venta'`. Existe por compatibilidad de esquema pero no debe usarse como criterio de logica o filtrado. El discriminador real es `lineaNegocio`.
+* **Contrato de leads:** `src/types/lead.ts` define el contrato complementario para leads y ofertas. Incluye `CamposFormularioOferta` para el flujo de inversion y `DatosOferta` para el seguimiento del proceso de negociacion con el banco.

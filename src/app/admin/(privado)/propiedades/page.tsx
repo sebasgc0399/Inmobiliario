@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 import { obtenerPropiedadesAdmin } from '@/lib/propiedades/obtenerPropiedadesAdmin';
 import { formatearPrecio } from '@/lib/currency';
-import type { EstadoPublicacion } from '@/types';
+import type { EstadoPublicacion, LineaNegocio } from '@/types';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +19,11 @@ const ESTADO_BADGE: Record<EstadoPublicacion, { etiqueta: string; clases: string
   activo:    { etiqueta: 'Activo',    clases: 'bg-green-100 text-green-700' },
   inactivo:  { etiqueta: 'Inactivo',  clases: 'bg-yellow-100 text-yellow-700' },
   vendido:   { etiqueta: 'Vendido',   clases: 'bg-blue-100 text-blue-700' },
-  arrendado: { etiqueta: 'Arrendado', clases: 'bg-purple-100 text-purple-700' },
+};
+
+const LINEA_BADGE: Record<LineaNegocio, { etiqueta: string; clases: string }> = {
+  tradicional: { etiqueta: 'Tradicional', clases: 'bg-gray-100 text-gray-600' },
+  inversion:   { etiqueta: 'Inversion',   clases: 'bg-amber-100 text-amber-700' },
 };
 
 function formatearFechaCorta(fecha: Date): string {
@@ -149,6 +153,9 @@ export default async function PropiedadesAdminPage() {
                     Título
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Linea
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Tipo
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -208,6 +215,18 @@ export default async function PropiedadesAdminPage() {
                         </span>
                       </td>
 
+                      {/* Línea */}
+                      <td className="px-3 py-4">
+                        {(() => {
+                          const lineaBadge = LINEA_BADGE[propiedad.lineaNegocio] ?? LINEA_BADGE.tradicional;
+                          return (
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${lineaBadge.clases}`}>
+                              {lineaBadge.etiqueta}
+                            </span>
+                          );
+                        })()}
+                      </td>
+
                       {/* Tipo */}
                       <td className="px-3 py-4">
                         <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
@@ -242,11 +261,11 @@ export default async function PropiedadesAdminPage() {
                       <td className="py-4 pl-3 pr-6">
                         <div className="flex items-center justify-end gap-1">
                           <Link
-                            href={`/propiedades/${propiedad.slug}`}
+                            href={propiedad.lineaNegocio === 'inversion' ? `/inversiones/${propiedad.slug}` : `/propiedades/${propiedad.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-                            title="Ver en sitio público"
+                            title="Ver en sitio publico"
                           >
                             <IconoOjo />
                             Ver

@@ -14,9 +14,9 @@ export default function Footer() {
               Conectamos personas con el hogar de sus sueños.
             </p>
             <span className="sr-only">
-              IsaHouse es la plataforma líder en venta y alquiler de casas, apartamentos, fincas y
-              locales comerciales en Medellín, Bogotá y toda Colombia. Encuentra las mejores opciones
-              para inversión inmobiliaria.
+              IsaHouse es la plataforma lider en venta de casas, apartamentos, fincas y
+              locales comerciales en Medellin, Bogota y toda Colombia. Encuentra las mejores opciones
+              para inversion inmobiliaria y oportunidades de inmuebles embargados.
             </span>
           </div>
 
@@ -51,18 +51,18 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/?negocio=venta&tipo=casa" className="text-sm hover:text-white transition-colors">
+                <Link href="/?tipo=casa" className="text-sm hover:text-white transition-colors">
                   Casas en Venta
                 </Link>
               </li>
               <li>
-                <Link href="/?negocio=alquiler&tipo=apartamento" className="text-sm hover:text-white transition-colors">
-                  Apartamentos en Arriendo
+                <Link href="/?tipo=apartamento" className="text-sm hover:text-white transition-colors">
+                  Apartamentos en Venta
                 </Link>
               </li>
               <li>
-                <Link href="/?condicion=sobre_planos" className="text-sm hover:text-white transition-colors">
-                  Proyectos Sobre Planos
+                <Link href="/inversiones" className="text-sm hover:text-white transition-colors">
+                  Oportunidades de Inversion
                 </Link>
               </li>
               <li>

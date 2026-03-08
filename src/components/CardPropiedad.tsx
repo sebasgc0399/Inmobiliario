@@ -1,20 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Propiedad, ModoNegocio, Moneda } from '@/types';
+import type { Propiedad, LineaNegocio, Moneda } from '@/types';
 import { convertirMoneda, formatearPrecio } from '@/lib/currency';
 
-const badgeConfig: Record<ModoNegocio, { etiqueta: string; clases: string }> = {
-  venta: {
+const badgeConfig: Record<LineaNegocio, { etiqueta: string; clases: string }> = {
+  tradicional: {
     etiqueta: 'Venta',
     clases: 'bg-blue-600 text-white',
   },
-  alquiler: {
-    etiqueta: 'Alquiler',
-    clases: 'bg-emerald-600 text-white',
-  },
-  venta_alquiler: {
-    etiqueta: 'Venta / Alquiler',
-    clases: 'bg-violet-600 text-white',
+  inversion: {
+    etiqueta: 'Oportunidad',
+    clases: 'bg-amber-600 text-white',
   },
 };
 
@@ -104,7 +100,7 @@ export default function CardPropiedad({ propiedad, monedaUsuario }: Props) {
   const {
     slug,
     titulo,
-    modoNegocio,
+    lineaNegocio,
     precio,
     ubicacion,
     caracteristicas,
@@ -115,14 +111,17 @@ export default function CardPropiedad({ propiedad, monedaUsuario }: Props) {
   const valorMostrar = convertirMoneda(precio.valor, precio.moneda, monedaUsuario);
 
   const imagen = imagenPrincipal ?? imagenes[0] ?? '/placeholder-propiedad.jpg';
-  const badge = badgeConfig[modoNegocio];
+  const badge = badgeConfig[lineaNegocio];
+  const hrefDetalle = lineaNegocio === 'inversion'
+    ? `/inversiones/${slug}`
+    : `/propiedades/${slug}`;
   const ubicacionTexto = [ubicacion.barrio, ubicacion.municipio]
     .filter(Boolean)
     .join(', ');
 
   return (
     <Link
-      href={`/propiedades/${slug}`}
+      href={hrefDetalle}
       className="group block rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl transition-shadow duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     >
       {/* Imagen principal */}
@@ -147,9 +146,6 @@ export default function CardPropiedad({ propiedad, monedaUsuario }: Props) {
         {/* Precio */}
         <p className="text-xl font-bold text-gray-900 leading-none">
           {formatearPrecio(valorMostrar, monedaUsuario)}
-          {modoNegocio === 'alquiler' && (
-            <span className="text-sm font-normal text-gray-500"> /mes</span>
-          )}
         </p>
 
         {/* Título */}

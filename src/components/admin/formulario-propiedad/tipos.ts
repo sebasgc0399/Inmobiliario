@@ -3,7 +3,7 @@
  * Sin directiva 'use client' — importable desde Server y Client Components.
  */
 
-import type { TipoPropiedad, ModoNegocio, CondicionInmueble, Moneda } from '@/types';
+import type { TipoPropiedad, CondicionInmueble, Moneda, LineaNegocio } from '@/types';
 
 /**
  * Contrato de React Hook Form para el formulario de crear/editar propiedad.
@@ -23,7 +23,7 @@ export interface CamposFormulario {
   slug: string;
   codigoPropiedad: string;
   tipo: TipoPropiedad;
-  modoNegocio: ModoNegocio;
+  lineaNegocio: LineaNegocio;
   condicion: CondicionInmueble;
   destacado: boolean;
   tourVirtual: string;    // string vacío si no hay
@@ -79,5 +79,15 @@ export interface CamposFormulario {
     metaTitle: string;
     metaDescription: string;
     keywords: string[]; // gestionado vía setValue
+  };
+
+  // ── Inversión (solo cuando lineaNegocio === 'inversion') ──────────────
+  inversion: {
+    entidadBancaria: string;
+    referenciaEntidad: string;
+    precioListadoBanco: string;    // string para el input, se parsea al enviar
+    documentosRequeridos: string[]; // gestionado vía setValue
+    notasInternas: string;
+    aceptaContraoferta: boolean;
   };
 }

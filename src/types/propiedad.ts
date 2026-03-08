@@ -14,14 +14,16 @@ export type TipoPropiedad =
   | 'bodega';
 
 /** Finalidad del negocio */
-export type ModoNegocio = 'venta' | 'alquiler' | 'venta_alquiler';
+export type ModoNegocio = 'venta';
+
+/** Línea de negocio del inmueble */
+export type LineaNegocio = 'inversion' | 'tradicional';
 
 /** Ciclo de vida de la publicación */
 export type EstadoPublicacion =
   | 'activo'
   | 'inactivo'
   | 'vendido'
-  | 'arrendado'
   | 'borrador';
 
 /** ISO 4217 — monedas soportadas */
@@ -103,6 +105,22 @@ export interface Agente {
   whatsapp?: string;
 }
 
+/** Datos exclusivos de propiedades de inversión (inmuebles de banco) */
+export interface DatosInversion {
+  /** Nombre de la entidad bancaria — NUNCA se expone al público */
+  entidadBancaria: string;
+  /** Número de expediente o referencia del banco */
+  referenciaEntidad?: string;
+  /** Precio de listado original del banco */
+  precioListadoBanco?: number;
+  /** Documentos requeridos para aplicar a la oferta */
+  documentosRequeridos?: string[];
+  /** Notas internas sobre el proceso con el banco */
+  notasInternas?: string;
+  /** Permite ofertas por debajo del precio de lista */
+  aceptaContraoferta: boolean;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaz principal
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +137,8 @@ export interface Propiedad {
   // ── Clasificación ──────────────────────────────────────────────────────────
   tipo: TipoPropiedad;
   modoNegocio: ModoNegocio;
+  /** Línea de negocio: inversión (banco) o tradicional (particular) */
+  lineaNegocio: LineaNegocio;
   /** Estado físico del inmueble: nuevo / usado / sobre_planos */
   condicion: CondicionInmueble;
   estadoPublicacion: EstadoPublicacion;
@@ -148,6 +168,10 @@ export interface Propiedad {
 
   // ── SEO (alimenta generateMetadata de Next.js App Router) ──────────────────
   seo?: SEOMetadata;
+
+  // ── Inversión (solo cuando lineaNegocio === 'inversion') ────────────────
+  /** Datos de inversión bancaria — solo presente en inmuebles de banco */
+  inversion?: DatosInversion;
 
   // ── Contacto ───────────────────────────────────────────────────────────────
   agente?: Agente;

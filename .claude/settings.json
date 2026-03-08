@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la src/app/\\\\\\(public\\\\\\)/propiedades/[slug]/page.tsx)",
+      "Bash(grep -n \"FiltrosBusquedaServidor\" src/types/*.ts)",
+      "Read(//d/Proyectos VS CODE/inmobiliario/Inmobiliario/src/types/**)"
+    ]
+  }
+}

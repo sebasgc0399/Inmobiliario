@@ -24,8 +24,8 @@ function aplicarFiltrosOrdenYLimite(
 ): Propiedad[] {
   let resultado = propiedades.filter((propiedad) => propiedad.estadoPublicacion === 'activo');
 
-  if (filtros.negocio) {
-    resultado = resultado.filter((propiedad) => propiedad.modoNegocio === filtros.negocio);
+  if (filtros.lineaNegocio) {
+    resultado = resultado.filter((propiedad) => propiedad.lineaNegocio === filtros.lineaNegocio);
   }
 
   if (filtros.tipo) {
@@ -121,8 +121,8 @@ export async function obtenerPropiedadesPublicas(
     .withConverter(propiedadConverter)
     .where('estadoPublicacion', '==', 'activo');
 
-  if (filtros.negocio) {
-    consulta = consulta.where('modoNegocio', '==', filtros.negocio);
+  if (filtros.lineaNegocio) {
+    consulta = consulta.where('lineaNegocio', '==', filtros.lineaNegocio);
   }
 
   if (filtros.tipo) {

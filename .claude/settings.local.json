@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(ls:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls -la \"src/app/\\(public\\)/inversiones/page.tsx\")",
+      "Bash(ls -la \"src/app/\\(public\\)/inversiones/\\\\[slug\\\\]/page.tsx\")"
     ]
   }
 }

@@ -29,7 +29,7 @@ function propiedadACamposFormulario(p: Propiedad): CamposFormulario {
     slug: p.slug,
     codigoPropiedad: p.codigoPropiedad,
     tipo: p.tipo,
-    modoNegocio: p.modoNegocio,
+    lineaNegocio: p.lineaNegocio,
     condicion: p.condicion,
     destacado: p.destacado ?? false,
     tourVirtual: p.tourVirtual ?? '',
@@ -88,6 +88,16 @@ function propiedadACamposFormulario(p: Propiedad): CamposFormulario {
       metaTitle: p.seo?.metaTitle ?? '',
       metaDescription: p.seo?.metaDescription ?? '',
       keywords: p.seo?.keywords ?? [],
+    },
+
+    // ── Inversión ─────────────────────────────────────────────────────────
+    inversion: {
+      entidadBancaria: p.inversion?.entidadBancaria ?? '',
+      referenciaEntidad: p.inversion?.referenciaEntidad ?? '',
+      precioListadoBanco: p.inversion?.precioListadoBanco?.toString() ?? '',
+      documentosRequeridos: p.inversion?.documentosRequeridos ?? [],
+      notasInternas: p.inversion?.notasInternas ?? '',
+      aceptaContraoferta: p.inversion?.aceptaContraoferta ?? true,
     },
   };
 }
