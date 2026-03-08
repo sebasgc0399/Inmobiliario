@@ -8,7 +8,7 @@ import { crearPropiedad } from '@/actions/propiedades/crearPropiedad';
 import type { DatosCrearPropiedad } from '@/actions/propiedades/crearPropiedad';
 import { actualizarPropiedad } from '@/actions/propiedades/actualizarPropiedad';
 import type { DatosActualizarPropiedad } from '@/actions/propiedades/actualizarPropiedad';
-import type { Estrato } from '@/types';
+import type { Estrato, TipoPropiedad } from '@/types';
 
 import SeccionBasica from './SeccionBasica';
 import SeccionUbicacion from './SeccionUbicacion';
@@ -38,6 +38,13 @@ interface Props {
   imagenesIniciales?: string[];
   imagenPrincipalInicial?: string;
 }
+
+const TIPOS_RESIDENCIALES: TipoPropiedad[] = [
+  'casa',
+  'apartamento',
+  'apartaestudio',
+  'finca',
+];
 
 // ── Valores iniciales del formulario ──────────────────────────────────────
 
@@ -111,11 +118,59 @@ function parsearEntero(val: string): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
+function esNumeroValido(valor: number | ''): valor is number {
+  return typeof valor === 'number' && !Number.isNaN(valor);
+}
+
 function transformarFormADatos(
   campos: CamposFormulario,
   imagenes: string[],
   imagenPrincipal: string,
 ): Omit<DatosCrearPropiedad, never> {
+  const esInversion = campos.lineaNegocio === 'inversion';
+  const esTipoResidencial = TIPOS_RESIDENCIALES.includes(campos.tipo);
+  const caracteristicas: DatosCrearPropiedad['caracteristicas'] = {
+    metrosCuadrados: campos.caracteristicas.metrosCuadrados,
+    instalaciones: esInversion ? [] : campos.caracteristicas.instalaciones,
+    ...(campos.caracteristicas.metrosConstruidos && {
+      metrosConstruidos: parsearNumero(campos.caracteristicas.metrosConstruidos),
+    }),
+  };
+
+  if (!esInversion) {
+    if (esTipoResidencial && esNumeroValido(campos.caracteristicas.habitaciones)) {
+      caracteristicas.habitaciones = campos.caracteristicas.habitaciones;
+    }
+
+    if (esNumeroValido(campos.caracteristicas.banos)) {
+      caracteristicas.banos = campos.caracteristicas.banos;
+    }
+
+    if (esNumeroValido(campos.caracteristicas.parqueaderos)) {
+      caracteristicas.parqueaderos = campos.caracteristicas.parqueaderos;
+    }
+
+    if (campos.caracteristicas.pisos) {
+      caracteristicas.pisos = parsearEntero(campos.caracteristicas.pisos);
+    }
+
+    if (campos.caracteristicas.piso) {
+      caracteristicas.piso = parsearEntero(campos.caracteristicas.piso);
+    }
+
+    if (esTipoResidencial && campos.caracteristicas.estrato) {
+      caracteristicas.estrato = parseInt(campos.caracteristicas.estrato, 10) as Estrato;
+    }
+
+    if (campos.caracteristicas.antiguedad) {
+      caracteristicas.antiguedad = parsearEntero(campos.caracteristicas.antiguedad);
+    }
+
+    if (esTipoResidencial && campos.caracteristicas.permiteRentaCorta) {
+      caracteristicas.permiteRentaCorta = true;
+    }
+  }
+
   const datos: DatosCrearPropiedad = {
     slug: campos.slug,
     codigoPropiedad: campos.codigoPropiedad,
@@ -154,35 +209,7 @@ function transformarFormADatos(
       }),
     },
 
-    caracteristicas: {
-      metrosCuadrados: campos.caracteristicas.metrosCuadrados,
-      instalaciones: campos.caracteristicas.instalaciones,
-      ...(campos.caracteristicas.habitaciones !== '' && {
-        habitaciones: campos.caracteristicas.habitaciones,
-      }),
-      ...(campos.caracteristicas.banos !== '' && {
-        banos: campos.caracteristicas.banos,
-      }),
-      ...(campos.caracteristicas.parqueaderos !== '' && {
-        parqueaderos: campos.caracteristicas.parqueaderos,
-      }),
-      ...(campos.caracteristicas.metrosConstruidos && {
-        metrosConstruidos: parsearNumero(campos.caracteristicas.metrosConstruidos),
-      }),
-      ...(campos.caracteristicas.pisos && {
-        pisos: parsearEntero(campos.caracteristicas.pisos),
-      }),
-      ...(campos.caracteristicas.piso && {
-        piso: parsearEntero(campos.caracteristicas.piso),
-      }),
-      ...(campos.caracteristicas.estrato && {
-        estrato: parseInt(campos.caracteristicas.estrato, 10) as Estrato,
-      }),
-      ...(campos.caracteristicas.antiguedad && {
-        antiguedad: parsearEntero(campos.caracteristicas.antiguedad),
-      }),
-      ...(campos.caracteristicas.permiteRentaCorta && { permiteRentaCorta: true }),
-    },
+    caracteristicas,
 
     imagenes,
     ...(imagenPrincipal && { imagenPrincipal }),
@@ -265,7 +292,7 @@ export default function FormularioPropiedad({
     defaultValues: valoresIniciales ?? VALORES_INICIALES,
   });
 
-  const codigoPropiedad = methods.watch('codigoPropiedad');
+  const codigoPropiedad = useWatch({ control: methods.control, name: 'codigoPropiedad' });
   const lineaNegocio = useWatch({ control: methods.control, name: 'lineaNegocio' });
 
   // Callback para GaleriaImagenes

@@ -13,7 +13,7 @@ import FormularioContacto from '@/components/detalle/FormularioContacto';
 import MapaUbicacion from '@/components/detalle/MapaUbicacion';
 import CardPropiedad from '@/components/CardPropiedad';
 
-import type { Moneda, TipoPropiedad } from '@/types';
+import type { LineaNegocio, Moneda, TipoPropiedad } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,6 +67,7 @@ export async function generateMetadata({
 interface PropiedadesRelacionadasProps {
   municipioActual: string;
   tipoActual: TipoPropiedad;
+  lineaNegocioActual: LineaNegocio;
   slugExcluir: string;
   moneda: Moneda;
 }
@@ -74,16 +75,25 @@ interface PropiedadesRelacionadasProps {
 async function PropiedadesRelacionadas({
   municipioActual,
   tipoActual,
+  lineaNegocioActual,
   slugExcluir,
   moneda,
 }: PropiedadesRelacionadasProps) {
   // Intentar por municipio primero
-  let relacionadas = await obtenerPropiedadesPublicas({ moneda, municipio: municipioActual });
+  let relacionadas = await obtenerPropiedadesPublicas({
+    moneda,
+    municipio: municipioActual,
+    lineaNegocio: lineaNegocioActual,
+  });
   relacionadas = relacionadas.filter((p) => p.slug !== slugExcluir);
 
   // Si no hay resultados, intentar por tipo de propiedad
   if (relacionadas.length === 0) {
-    const porTipo = await obtenerPropiedadesPublicas({ moneda, tipo: tipoActual });
+    const porTipo = await obtenerPropiedadesPublicas({
+      moneda,
+      tipo: tipoActual,
+      lineaNegocio: lineaNegocioActual,
+    });
     relacionadas = porTipo.filter((p) => p.slug !== slugExcluir);
   }
 
@@ -545,6 +555,7 @@ export default async function PaginaDetallePropiedad({
         <PropiedadesRelacionadas
           municipioActual={propiedad.ubicacion.municipio}
           tipoActual={propiedad.tipo}
+          lineaNegocioActual={propiedad.lineaNegocio}
           slugExcluir={propiedad.slug}
           moneda={moneda}
         />

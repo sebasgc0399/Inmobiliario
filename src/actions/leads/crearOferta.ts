@@ -3,61 +3,58 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
 import { obtenerAdminDb } from '@/lib/firebase/admin';
+import type { Moneda } from '@/types';
 import type { CamposFormularioOferta, Lead } from '@/types/lead';
 
 type ResultadoCrearOferta = { ok: true } | { ok: false; error: string };
+type DatosOfertaCliente = Omit<CamposFormularioOferta, 'monedaOferta'>;
 
-/**
- * Server Action para crear un lead de oferta de inversión en Firestore.
- *
- * Pre-vincular slug y codigo desde el Server Component:
- *   crearOferta.bind(null, slug, codigoPropiedad)
- *
- * Validaciones:
- * - montoOfertado > 0
- * - email obligatorio (a diferencia de crearLead)
- * - aceptaTerminos === true
- */
+const MONEDAS_VALIDAS: Moneda[] = ['COP', 'USD', 'EUR'];
+
 export async function crearOferta(
   slugPropiedad: string,
   codigoPropiedad: string,
-  datos: CamposFormularioOferta,
+  monedaOferta: Moneda,
+  datos: DatosOfertaCliente,
 ): Promise<ResultadoCrearOferta> {
-  // ── Validación defensiva ────────────────────────────────────────────────────
+  const slugLimpio = slugPropiedad?.trim().toLowerCase() ?? '';
+  const codigoLimpio = codigoPropiedad?.trim().toUpperCase() ?? '';
   const nombreLimpio = datos.nombre?.trim() ?? '';
   const telefonoLimpio = datos.telefono?.trim() ?? '';
   const emailLimpio = datos.email?.trim() ?? '';
   const mensajeLimpio = datos.mensaje?.trim() ?? '';
 
-  if (!nombreLimpio || nombreLimpio.length > 120) {
-    return { ok: false, error: 'Nombre inválido.' };
-  }
-  if (!telefonoLimpio || telefonoLimpio.length < 6 || telefonoLimpio.length > 30) {
-    return { ok: false, error: 'Teléfono inválido.' };
-  }
-  if (!emailLimpio || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpio)) {
-    return { ok: false, error: 'Email inválido.' };
-  }
-  if (emailLimpio.length > 254) {
-    return { ok: false, error: 'Email demasiado largo.' };
-  }
-  if (!mensajeLimpio || mensajeLimpio.length > 1000) {
-    return { ok: false, error: 'Mensaje inválido.' };
-  }
-  if (typeof datos.montoOfertado !== 'number' || datos.montoOfertado <= 0) {
-    return { ok: false, error: 'El monto ofertado debe ser mayor a 0.' };
-  }
-  if (!datos.monedaOferta || !['COP', 'USD', 'EUR'].includes(datos.monedaOferta)) {
-    return { ok: false, error: 'Moneda inválida.' };
-  }
-  if (!datos.aceptaTerminos) {
-    return { ok: false, error: 'Debes aceptar los términos y condiciones.' };
-  }
-  if (!slugPropiedad || !codigoPropiedad) {
+  if (!slugLimpio || !codigoLimpio) {
     return { ok: false, error: 'Propiedad no identificada.' };
   }
+  if (!MONEDAS_VALIDAS.includes(monedaOferta)) {
+    return { ok: false, error: 'Moneda invalida.' };
+  }
+  if (!nombreLimpio || nombreLimpio.length > 120) {
+    return { ok: false, error: 'Nombre invalido.' };
+  }
+  if (!telefonoLimpio || telefonoLimpio.length < 6 || telefonoLimpio.length > 30) {
+    return { ok: false, error: 'Telefono invalido.' };
+  }
+  if (!emailLimpio || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpio)) {
+    return { ok: false, error: 'Correo invalido.' };
+  }
+  if (emailLimpio.length > 254) {
+    return { ok: false, error: 'Correo demasiado largo.' };
+  }
+  if (!mensajeLimpio || mensajeLimpio.length > 1000) {
+    return { ok: false, error: 'Mensaje invalido.' };
+  }
+  if (typeof datos.montoOfertado !== 'number' || !Number.isFinite(datos.montoOfertado)) {
+    return { ok: false, error: 'El monto ofertado es invalido.' };
+  }
+  if (datos.montoOfertado <= 0) {
+    return { ok: false, error: 'El monto ofertado debe ser mayor a 0.' };
+  }
+  if (!datos.aceptaTerminos) {
+    return { ok: false, error: 'Debes aceptar los terminos del proceso.' };
+  }
 
-  // ── Construcción del documento ──────────────────────────────────────────────
   const ahora = new Date();
 
   const leadData: Omit<Lead, 'id'> = {
@@ -65,20 +62,19 @@ export async function crearOferta(
     telefono: telefonoLimpio,
     email: emailLimpio,
     mensaje: mensajeLimpio,
-    slugPropiedad,
-    codigoPropiedad,
+    slugPropiedad: slugLimpio,
+    codigoPropiedad: codigoLimpio,
     origen: 'formulario_oferta',
     estado: 'nuevo',
     oferta: {
       montoOfertado: datos.montoOfertado,
-      monedaOferta: datos.monedaOferta,
+      monedaOferta,
       estadoOferta: 'pendiente',
     },
     creadoEn: ahora,
     actualizadoEn: ahora,
   };
 
-  // ── Escritura en Firestore ────────────────────────────────────────────────
   try {
     await obtenerAdminDb()
       .collection('leads')
@@ -89,8 +85,8 @@ export async function crearOferta(
       });
 
     return { ok: true };
-  } catch (err) {
-    console.error('[crearOferta] Error al escribir en Firestore:', err);
-    return { ok: false, error: 'Error al enviar la oferta. Inténtalo de nuevo.' };
+  } catch (error) {
+    console.error('[crearOferta] Error al escribir en Firestore:', error);
+    return { ok: false, error: 'Error al enviar la oferta. Intentalo de nuevo.' };
   }
 }
