@@ -13,7 +13,10 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(rm -rf \"d:/Proyectos VS CODE/inmobiliaria/Inmobiliario/.next/dev/lock\")",
       "Read(//d/Proyectos/ VS/ CODE/inmobiliaria/Inmobiliario/src/types/**)",
-      "Bash(grep -E \"\\\\.tsx$|^d\")"
+      "Bash(grep -E \"\\\\.tsx$|^d\")",
+      "Bash(xargs grep -l \"propiedades\\\\|Propiedad\")",
+      "Bash(npm run lint)",
+      "Bash(npm run build)"
     ],
     "additionalDirectories": [
       "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario"

@@ -1,23 +1,78 @@
-# Portal Inmobiliario - Cascaron Base
+# Inmobiliario - Cascaron Base Post-Reset
 
-Boilerplate limpio construido con Next.js (App Router), Tailwind CSS y Firebase (Auth, Admin SDK).
+Repositorio Next.js con App Router, TypeScript, Tailwind y Firebase.
+El proyecto esta en Reset Nuclear: hoy solo existe la base tecnica y el flujo admin inicial.
 
-## Estado Actual
+## Estado real del repo
 
-El proyecto acaba de pasar por un **Reset Nuclear**. Hoy es un lienzo en blanco seguro, enfocado unicamente en la autenticacion base y en rutas estaticas. Todo el codigo complejo anterior fue eliminado para reconstruir el sistema desde una base mas simple, clara y controlada.
+- El dominio inmobiliario aun no esta implementado.
+- No existen catalogo publico, detalle de propiedad, filtros de busqueda ni CRUD de propiedades.
+- El codigo activo cubre rutas publicas estaticas y autenticacion/sesion admin.
 
-## Vision de Arquitectura (Proximos Pasos)
+## Rutas implementadas
 
-El sistema evolucionara hacia un modelo dual: **Tradicional** e **Inversion Bancaria**, alimentado por una sola coleccion NoSQL llamada `propiedades`.
+| Ruta | Tipo | Estado |
+|---|---|---|
+| `/` | Publica | Activa |
+| `/nosotros` | Publica | Activa |
+| `/contacto` | Publica | Activa |
+| `/admin/login` | Admin publica | Activa |
+| `/admin/restablecer-contrasena` | Admin publica | Activa |
+| `/admin` | Admin privada | Activa (requiere sesion) |
+| `/api/auth/session` | API | Activa |
+| `/api/auth/logout` | API | Activa |
 
-Regla de Oro de Seguridad: aunque exista una sola base de datos, el sistema sanitizara estrictamente los datos desde el servidor para asegurar que `entidadBancaria` jamas llegue al cliente final. Esa sanitizacion protege directamente el modelo de negocio.
+## Setup local
 
-## Vision de Experiencia de Usuario (UX/UI)
+1. Instala dependencias:
+   ```bash
+   npm install
+   ```
+2. Crea `.env` a partir de `.env.example` y completa variables de Firebase.
+3. Inicia en desarrollo:
+   ```bash
+   npm run dev
+   ```
+4. Verifica calidad y build:
+   ```bash
+   npm run lint
+   npm run build
+   ```
 
-El catalogo publico sera una sola pagina unificada. La navegacion principal del inventario se resolvera con un sistema de `Tabs` para alternar entre **Tradicional** y **Oportunidades de Banco** sin fragmentar la experiencia.
+## Variables de entorno
 
-## Filtros Dinamicos
+Publicas:
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `CI_NEXT_PUBLIC_ENV`
 
-Los filtros de busqueda deben ser inteligentes e hiper-simples.
+Privadas:
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
 
-Si el usuario esta en la pestana de **Oportunidades de Banco**, el sistema nunca debe preguntar por `habitaciones` o `banos`. En ese contexto, los filtros deben limitarse a datos basicos como `area`, `precio`, `ciudad` y `tipo`.
+## Auth admin base
+
+- Login cliente con Firebase Auth desde `/admin/login`.
+- Creacion de cookie `__session` via `POST /api/auth/session`.
+- Cierre de sesion via `POST /api/auth/logout`.
+- Proteccion de `/admin/*` por `src/proxy.ts` y validacion de sesion en layout privado.
+- Asignacion de claim admin:
+  ```bash
+  npm run auth:set-admin -- <UID>
+  ```
+
+## Direccion funcional definida (aun no implementada)
+
+- Habra una sola coleccion Firestore: `propiedades`.
+- Cada propiedad se clasificara con `lineaNegocio: 'inversion' | 'tradicional'`.
+- `inversion` se define como oportunidad comercial con datos potencialmente incompletos.
+- `entidadBancaria` nunca debe exponerse al cliente.
+- No se fijan aun rutas publicas futuras del catalogo hasta definir modelo y frontend.
+
+## Documentacion canonica
+
+- Reglas operativas: `AGENTS.md`
+- Contexto funcional/comercial: `docs/brief-negocio-post-reset.md`
