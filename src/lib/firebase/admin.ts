@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cert, getApps, initializeApp, type App, type ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 type ClaveEnvPrivada =
   | 'FIREBASE_PROJECT_ID'
@@ -49,4 +50,8 @@ function obtenerAppAdmin(): App {
 
 export function obtenerAdminAuth() {
   return getAuth(obtenerAppAdmin());
+}
+
+export function obtenerAdminFirestore() {
+  return getFirestore(obtenerAppAdmin());
 }

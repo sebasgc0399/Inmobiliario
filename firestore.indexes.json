@@ -4,86 +4,26 @@
       "collectionGroup": "propiedades",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "estadoPublicacion",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "actualizadoEn",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "estadoPublicacion", "order": "ASCENDING" },
+        { "fieldPath": "actualizadoEn", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "propiedades",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "estadoPublicacion",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "modoNegocio",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "actualizadoEn",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "estadoPublicacion", "order": "ASCENDING" },
+        { "fieldPath": "lineaNegocio", "order": "ASCENDING" },
+        { "fieldPath": "actualizadoEn", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "propiedades",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "estadoPublicacion",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "tipo",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "actualizadoEn",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "propiedades",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "estadoPublicacion",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "modoNegocio",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "tipo",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "actualizadoEn",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "propiedades",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "slug",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "estadoPublicacion",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "estadoPublicacion", "order": "ASCENDING" },
+        { "fieldPath": "destacado", "order": "ASCENDING" },
+        { "fieldPath": "actualizadoEn", "order": "DESCENDING" }
       ]
     }
   ],

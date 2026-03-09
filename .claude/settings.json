@@ -16,7 +16,8 @@
       "Bash(grep -E \"\\\\.tsx$|^d\")",
       "Bash(xargs grep -l \"propiedades\\\\|Propiedad\")",
       "Bash(npm run lint)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Read(//d/Proyectos/ VS/ CODE/inmobiliaria/Inmobiliario/**)"
     ],
     "additionalDirectories": [
       "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario"
