@@ -20,7 +20,8 @@
       "Read(//d/Proyectos/ VS/ CODE/inmobiliaria/Inmobiliario/**)"
     ],
     "additionalDirectories": [
-      "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario"
+      "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario",
+      "d:\\Proyectos VS CODE\\inmobiliaria\\Inmobiliario\\src\\app\\(public)\\propiedades"
     ]
   }
 }

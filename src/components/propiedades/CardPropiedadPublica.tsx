@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import type { PropiedadPublica } from '@/types/propiedad';
 import { formatearPrecioCOP } from '@/lib/utils/formato';
 
@@ -12,6 +13,7 @@ export default function CardPropiedadPublica({
     .join(', ');
 
   return (
+    <Link href={`/propiedades/${propiedad.slug}`} className="block">
     <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       {/* Imagen */}
       <div className="relative aspect-[4/3] bg-gray-100">
@@ -162,5 +164,6 @@ export default function CardPropiedadPublica({
         </div>
       </div>
     </article>
+    </Link>
   );
 }
