@@ -1,20 +1,26 @@
 import type { Metadata } from 'next';
+import FormularioContacto from '@/components/contacto/FormularioContacto';
+import { obtenerPropiedadPublicaPorSlug } from '@/lib/propiedades/consultas';
+import { formatearPrecioCOP } from '@/lib/utils/formato';
+import type { ContextoPropiedadContacto } from '@/types/lead';
 
 export const metadata: Metadata = {
   title: 'Contacto',
   description:
-    'Ponte en contacto con el equipo de IsaHouse. Estamos en El Poblado, Medellín. Escríbenos por WhatsApp o correo electrónico.',
+    'Ponte en contacto con el equipo de IsaHouse. Escribenos por WhatsApp o correo electronico.',
 };
+
+const REGEX_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const datosContacto = [
   {
     id: 'direccion',
-    etiqueta: 'Dirección',
-    valor: 'Calle 10 # 43D-15, El Poblado, Medellín',
+    etiqueta: 'Direccion',
+    valor: 'Calle 10 # 43D-15, El Poblado, Medellin',
     icono: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 text-blue-600 shrink-0 mt-0.5"
+        className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -36,13 +42,13 @@ const datosContacto = [
   },
   {
     id: 'email',
-    etiqueta: 'Correo electrónico',
+    etiqueta: 'Correo electronico',
     valor: 'contacto@isahouse.co',
     href: 'mailto:contacto@isahouse.co',
     icono: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 text-blue-600 shrink-0 mt-0.5"
+        className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -65,7 +71,7 @@ const datosContacto = [
     icono: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 text-green-500 shrink-0 mt-0.5"
+        className="mt-0.5 h-5 w-5 shrink-0 text-green-500"
         viewBox="0 0 24 24"
         fill="currentColor"
         aria-hidden="true"
@@ -77,32 +83,67 @@ const datosContacto = [
   },
 ];
 
-export default function ContactoPage() {
+function normalizarRef(ref: string | string[] | undefined): string | null {
+  if (typeof ref !== 'string') return null;
+
+  const slug = ref.trim().toLowerCase();
+  if (!slug) return null;
+  if (slug.length > 120) return null;
+  if (!REGEX_SLUG.test(slug)) return null;
+
+  return slug;
+}
+
+async function obtenerContextoPropiedad(
+  ref: string | null
+): Promise<ContextoPropiedadContacto | null> {
+  if (!ref) return null;
+
+  const propiedad = await obtenerPropiedadPublicaPorSlug(ref);
+  if (!propiedad) return null;
+
+  return {
+    slug: propiedad.slug,
+    titulo: propiedad.titulo,
+    tipoInmueble: propiedad.tipoInmueble,
+    municipio: propiedad.municipio,
+    precio: propiedad.precio,
+    lineaNegocio: propiedad.lineaNegocio,
+  };
+}
+
+export default async function ContactoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const ref = normalizarRef(params.ref);
+  const contextoPropiedad = await obtenerContextoPropiedad(ref);
+
   return (
     <main>
-
-      {/* Hero de sección */}
-      <section className="bg-gray-50 border-b border-gray-200 py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-sm font-medium text-blue-600 uppercase tracking-wider mb-3">
-            Estamos aquí para ayudarte
+      {/* Hero de seccion */}
+      <section className="border-b border-gray-200 bg-gray-50 px-4 py-16">
+        <div className="mx-auto max-w-7xl">
+          <p className="mb-3 text-sm font-medium uppercase tracking-wider text-blue-600">
+            Estamos aqui para ayudarte
           </p>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Contacto</h1>
-          <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
-            ¿Tienes preguntas sobre una propiedad o quieres hablar con un asesor?
-            Escríbenos y te responderemos a la brevedad.
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">Contacto</h1>
+          <p className="max-w-2xl text-lg leading-relaxed text-gray-600">
+            Tienes preguntas sobre una propiedad o quieres hablar con un asesor?
+            Escribenos y te responderemos a la brevedad.
           </p>
         </div>
       </section>
 
       {/* Grid de contenido */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           {/* Columna izquierda: datos de contacto */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Información de contacto
+            <h2 className="mb-6 text-xl font-bold text-gray-900">
+              Informacion de contacto
             </h2>
 
             <ul className="space-y-5">
@@ -110,13 +151,13 @@ export default function ContactoPage() {
                 <li key={dato.id} className="flex items-start gap-3">
                   {dato.icono}
                   <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-0.5">
+                    <p className="mb-0.5 text-xs font-medium uppercase tracking-wider text-gray-400">
                       {dato.etiqueta}
                     </p>
                     {dato.href ? (
                       <a
                         href={dato.href}
-                        className="text-sm text-gray-800 hover:text-blue-600 transition-colors"
+                        className="text-sm text-gray-800 transition-colors hover:text-blue-600"
                       >
                         {dato.valor}
                       </a>
@@ -128,50 +169,47 @@ export default function ContactoPage() {
               ))}
             </ul>
 
-            <div className="mt-8 rounded-2xl overflow-hidden border border-gray-200 h-52 bg-gray-100 flex items-center justify-center">
-              <p className="text-sm text-gray-400">Mapa próximamente</p>
+            <div className="mt-8 flex h-52 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+              <p className="text-sm text-gray-400">Mapa proximamente</p>
             </div>
           </div>
 
-          {/* Columna derecha: formulario placeholder */}
+          {/* Columna derecha: formulario */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Envíanos un mensaje
-            </h2>
+            {contextoPropiedad ? (
+              <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                  Estas consultando esta propiedad
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-gray-900">
+                  {contextoPropiedad.titulo}
+                </h3>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-gray-600">
+                    {contextoPropiedad.tipoInmueble}
+                  </span>
+                  <span>{contextoPropiedad.municipio}</span>
+                  <span className="font-semibold text-blue-700">
+                    {formatearPrecioCOP(contextoPropiedad.precio)}
+                  </span>
+                </div>
+              </div>
+            ) : null}
 
-            <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-4 px-6 py-16 text-center">
-              <div className="inline-flex items-center justify-center rounded-full bg-gray-100 p-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-7 w-7 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-base font-semibold text-gray-700 mb-1">
-                  Formulario de contacto
-                </p>
-                <p className="text-sm text-gray-400">
-                  Próximamente podrás enviarnos un mensaje directamente desde aquí.
-                  Por ahora, contáctanos por WhatsApp o correo electrónico.
-                </p>
-              </div>
+            <h2 className="text-xl font-bold text-gray-900">Envianos un mensaje</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Completa este formulario y nuestro equipo te contactara lo antes
+              posible.
+            </p>
+
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+              <FormularioContacto
+                slugPropiedadInicial={contextoPropiedad?.slug ?? null}
+              />
             </div>
           </div>
-
         </div>
       </section>
-
     </main>
   );
 }

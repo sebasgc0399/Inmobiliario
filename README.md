@@ -64,6 +64,28 @@ Privadas:
   npm run auth:set-admin -- <UID>
   ```
 
+## Seed inicial de propiedades
+
+Seed manual para poblar la coleccion `propiedades` con 8 inmuebles mock y probar catalogo/detalle.
+
+Prerequisitos:
+- Variables privadas configuradas en `.env`:
+  - `FIREBASE_PROJECT_ID`
+  - `FIREBASE_CLIENT_EMAIL`
+  - `FIREBASE_PRIVATE_KEY`
+
+Ejecucion:
+```bash
+npm run seed:propiedades
+```
+
+Comportamiento:
+- Idempotente por `slug` (upsert).
+- Si existe `slug`, actualiza el documento.
+- Si no existe, crea el documento con `docId = slug`.
+- Si detecta conflictos de unicidad (`slug` o `codigoReferencia`), reporta y omite ese registro.
+- No borra la coleccion.
+
 ## Direccion funcional definida (aun no implementada)
 
 - Habra una sola coleccion Firestore: `propiedades`.

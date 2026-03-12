@@ -175,9 +175,9 @@ service cloud.firestore {
     }
 
     match /leads/{leadId} {
-      // El Admin SDK (usado en el Server Action guardarLead) ignora estas reglas,
-      // pero se definen como defensa en profundidad contra escrituras directas del cliente
-      allow create: if leadValido(request.resource.data);
+      // El Admin SDK (usado por Server Actions) ignora estas reglas.
+      // Se bloquea create para evitar escrituras directas desde cliente.
+      allow create: if false;
       allow read, update, delete: if isAdmin();
     }
 

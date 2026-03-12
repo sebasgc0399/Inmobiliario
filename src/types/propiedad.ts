@@ -6,6 +6,7 @@ export type TipoInmueble =
   | 'apartamento'
   | 'casa'
   | 'local'
+  | 'oficina'
   | 'bodega'
   | 'lote'
   | 'otro';

@@ -11,3 +11,13 @@ export type {
 } from './propiedad';
 
 export { CAMPOS_SENSIBLES } from './propiedad';
+
+export type {
+  OrigenLead,
+  Lead,
+  EnviarLeadContactoInput,
+  ContextoPropiedadContacto,
+  CampoLeadFormulario,
+  ErroresLeadFormulario,
+  ResultadoEnviarLeadContacto,
+} from './lead';
